@@ -41,3 +41,8 @@ void restore_backup(const char *backup_id, const char *restore_dir) {
     *          restore_dir est le répertoire de destination de la restauration
     */
 }
+
+void list_backups(const char *backup_dir) {
+    printf("Backups dans le repertoire: %s\n", backup_dir);
+    list_files(backup_dir);
+}
