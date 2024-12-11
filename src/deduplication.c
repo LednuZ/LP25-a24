@@ -18,6 +18,10 @@ unsigned int hash_md5(unsigned char *md5) {
 
 // Fonction pour calculer le MD5 d'un chunk
 void compute_md5(void *data, size_t len, unsigned char *md5_out) {
+    if (!data || !md5_out) {
+        return; // vérifie que les pointeurs pointent une variable
+    }
+    // à compléter
 }
 
 // Fonction permettant de chercher un MD5 dans la table de hachage
@@ -31,14 +35,16 @@ int find_md5(Md5Entry *hash_table, unsigned char *md5) {
 
 // Ajouter un MD5 dans la table de hachage
 void add_md5(Md5Entry *hash_table, unsigned char *md5, int index) {
+
 }
 
 // Fonction pour convertir un fichier non dédupliqué en tableau de chunks
-void deduplicate_file(FILE *file, Chunk *chunks, Md5Entry *hash_table){
+void deduplicate_file(FILE *file, Chunk *chunks, Md5Entry *hash_table) {
     /* @param:  file est le fichier qui sera dédupliqué
     *           chunks est le tableau de chunks initialisés qui contiendra les chunks issu du fichier
     *           hash_table est le tableau de hachage qui contient les MD5 et l'index des chunks unique
     */
+
 }
 
 
