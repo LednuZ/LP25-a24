@@ -43,6 +43,21 @@ void restore_backup(const char *backup_id, const char *restore_dir) {
 }
 
 void list_backups(const char *backup_dir) {
-    printf("Backups dans le repertoire: %s\n", backup_dir);
-    list_files(backup_dir);
+    DIR *dir = opendir(backup_dir);
+    if (dir == NULL){
+        return;        
+    }
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name,".") == 0 || strcmp(entry->d_name,"..") == 0){
+            continue;
+        } 
+        char path[2048];
+        snprintf(path, sizeof(path), "%s/%s", backup_dir, entry->d_name);
+        struct stat st;
+        if (stat(path,&st) == 0 && S_ISDIR(st.st_mode)) {
+            printf("%s\n", entry->d_name);
+        }
+    }
+    closedir(dir);
 }
