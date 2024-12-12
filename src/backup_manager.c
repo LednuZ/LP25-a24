@@ -8,6 +8,8 @@
 #include <time.h>
 #include <sys/stat.h>
 
+#define MAX_CHUNKS 10000
+
 // Fonction pour créer une nouvelle sauvegarde complète puis incrémentale
 void create_backup(const char *source_dir, const char *backup_dir) {
     /* @param: source_dir est le chemin vers le répertoire à sauvegarder
@@ -17,22 +19,59 @@ void create_backup(const char *source_dir, const char *backup_dir) {
 
 // Fonction permettant d'enregistrer dans fichier le tableau de chunk dédupliqué
 void write_backup_file(const char *output_filename, Chunk *chunks, int chunk_count) {
-    /*
-    */
+    FILE *file = fopen(output_filename, "wb");
+    if (file == NULL){
+        perror("Erreur d'ouverture du fichier");
+        return;
+    }
+    fwrite(&chunk_count, sizeof(int), 1, file);
+    size_t chunk_size = CHUNK_SIZE;
+    for (int i=0; i<chunk_count; i++) {
+        fwrite(chunks[i].md5, MD5_DIGEST_LENGTH, 1, file);
+        fwrite(&chunk_size, sizeof(size_t), 1, file);
+        fwrite(chunks[i].data, 1, chunk_size, file);
+    }
+    fclose(file);
 }
 
 
-// Fonction implémentant la logique pour la sauvegarde d'un fichier
 void backup_file(const char *filename) {
-    /*
-    */
+    FILE *file = fopen(filename, "rb");
+    if (file == NULL){
+        perror("Erreur d'ouverture du fichier");
+        return;
+    }
+    Chunk chunks[MAX_CHUNKS];
+    //memset(chunks, 0, sizeof(chunks));
+    Md5Entry hash_table[HASH_TABLE_SIZE];
+    //memset(hash_table, 0, sizeof(hash_table));
+    deduplicate_file(file, chunks, hash_table);
+    fclose(file);
+
+    int chunk_count = 0;
+    for (int i=0; i<MAX_CHUNKS; i++) {
+        if (chunks[i].data == NULL){
+            break;
+        } 
+        chunk_count++;
+    }
+
+    char output_filename[2048];
+    snprintf(output_filename, sizeof(output_filename), "%s.dedup", filename);
+    write_backup_file(output_filename, chunks, chunk_count);
 }
 
 
-// Fonction permettant la restauration du fichier backup via le tableau de chunk
 void write_restored_file(const char *output_filename, Chunk *chunks, int chunk_count) {
-    /*
-    */
+    FILE *file = fopen(output_filename, "wb");
+    if (!file) {
+        perror("Erreur d'ouverture du fichier de destination pendant la restauration");
+        return;
+    }
+    for (int i=0; i<chunk_count; i++) {
+        fwrite(chunks[i].data, 1, CHUNK_SIZE, file);
+    }
+    fclose(file);
 }
 
 // Fonction pour restaurer une sauvegarde
@@ -45,7 +84,8 @@ void restore_backup(const char *backup_id, const char *restore_dir) {
 void list_backups(const char *backup_dir) {
     DIR *dir = opendir(backup_dir);
     if (dir == NULL){
-        return;        
+        perror("Erreur pendant l'ouverture du dossier");
+        return;       
     }
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
