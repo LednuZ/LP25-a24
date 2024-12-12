@@ -22,6 +22,7 @@ void compute_md5(void *data, size_t len, unsigned char *md5_out) {
         return; // vérifie que les pointeurs pointent une variable
     }
     MD5(data, len, md5_out);
+    return;
 }
 
 // Fonction permettant de chercher un MD5 dans la table de hachage
