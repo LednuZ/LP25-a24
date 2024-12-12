@@ -74,13 +74,57 @@ void write_restored_file(const char *output_filename, Chunk *chunks, int chunk_c
     fclose(file);
 }
 
-// Fonction pour restaurer une sauvegarde
+/**
+ * @brief Restaure une sauvegarde à partir d'un répertoire spécifié.
+ *
+ * Lit le .backup_log pour connaître la liste des fichiers, puis pour chaque
+ * fichier dédupliqué, reconstruit le fichier original dans restore_dir.
+ *
+ * @param backup_id Chemin vers le répertoire de la sauvegarde.
+ * @param restore_dir Répertoire de destination pour la restauration.
+ */
 void restore_backup(const char *backup_id, const char *restore_dir) {
-    /* @param: backup_id est le chemin vers le répertoire de la sauvegarde que l'on veut restaurer
-    *          restore_dir est le répertoire de destination de la restauration
-    */
+    char backup_dir[2048];
+    strcpy(backup_dir, backup_id);
+    char *last_slash = strrchr(backup_dir, '/');
+    if (last_slash) *last_slash = '\0';
+    char backup_log_path[2048];
+    snprintf(backup_log_path, sizeof(backup_log_path), "%s/.backup_log", backup_dir);
+    if (!file_exists(backup_log_path)) {
+        return;
+    }
+
+    log_t logs = read_backup_log(backup_log_path);
+    create_directory(restore_dir);
+
+    for (log_element *elt = logs.head; elt != NULL; elt = elt->next) {
+        char dedup_file[2048];
+        snprintf(dedup_file, sizeof(dedup_file), "%s/%s.dedup", backup_id, elt->path);
+        if (!file_exists(dedup_file)) continue;
+        FILE *fin = fopen(dedup_file, "rb");
+        if (!fin) continue;
+        Chunk *chunks = NULL;
+        int chunk_count = 0;
+        undeduplicate_file(fin, &chunks, &chunk_count);
+        fclose(fin);
+
+        char restored_file[2048];
+        snprintf(restored_file, sizeof(restored_file), "%s/%s", restore_dir, elt->path);
+        write_restored_file(restored_file, chunks, chunk_count);
+        for (int i=0; i<chunk_count; i++) {
+            free(chunks[i].data);
+        }
+        free(chunks);
+    }
 }
 
+/**
+ * @brief Liste les sauvegardes disponibles dans un répertoire.
+ *
+ * Affiche les noms de répertoires de sauvegarde (horodatés) présents dans backup_dir.
+ *
+ * @param backup_dir Répertoire contenant les différentes sauvegardes.
+ */
 void list_backups(const char *backup_dir) {
     DIR *dir = opendir(backup_dir);
     if (dir == NULL){
