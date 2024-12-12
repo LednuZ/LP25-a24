@@ -35,4 +35,6 @@ void list_files(const char *path){
   */
 }
 
+void copy_file(const char *src, const char *dest){
 
+}
