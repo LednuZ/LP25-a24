@@ -62,7 +62,38 @@ void update_backup_log(const char *logfile, log_t *logs){
   * @param: logfile - le chemin vers le fichier .backup_log
   *         logs - qui est la liste de toutes les lignes du fichier .backup_log sauvegardée dans une structure log_t
   */
+    char buffer[BUFFER_SIZE] ;
+    FILE *f = fopen(logfile, "r") ;
+    FILE *temp = fopen("temp.txt", "w") ;
 
+    if (f && temp) {
+        log_element *elt = logs->head ;
+        while(fgets(buffer, BUFFER_SIZE, f) && elt != NULL) {
+            char *log = malloc(strlen(elt->path) + strlen(elt->date) + strlen(elt->md5) + 3) ;
+            strcpy(log, elt->path) ;
+            strcat(log, ";") ;
+            strcat(log, elt->date) ;
+            strcat(log, ";") ;
+            strcat(log, elt->md5) ;
+
+            if (strcmp(buffer, log) == 0) {
+                fwrite(&buffer, BUFFER_SIZE, 1, f) ;
+            } else {
+                fwrite(&log, strlen(log), 1, f) ;
+            }
+
+            elt = elt->next ;
+            free(log) ;
+        }
+
+        if (elt == NULL) {
+            while (fgets(buffer, BUFFER_SIZE, f)) {
+                fwrite(&buffer, BUFFER_SIZE, 1, f) ;
+            }
+        } else if () {
+
+        }
+    }
 }
 
 void write_log_element(log_element *elt, FILE *logfile){
