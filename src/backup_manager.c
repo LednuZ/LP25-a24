@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 
 #define MAX_CHUNKS 10000
+#define MAX_SIZE_PATH 2048
 
 // Fonction pour créer une nouvelle sauvegarde complète puis incrémentale
 void create_backup(const char *source_dir, const char *backup_dir) {
@@ -56,7 +57,7 @@ void backup_file(const char *filename) {
         chunk_count++;
     }
 
-    char output_filename[2048];
+    char output_filename[MAX_SIZE_PATH];
     snprintf(output_filename, sizeof(output_filename), "%s.dedup", filename);
     write_backup_file(output_filename, chunks, chunk_count);
 }
@@ -84,11 +85,11 @@ void write_restored_file(const char *output_filename, Chunk *chunks, int chunk_c
  * @param restore_dir Répertoire de destination pour la restauration.
  */
 void restore_backup(const char *backup_id, const char *restore_dir) {
-    char backup_dir[2048];
+    char backup_dir[MAX_SIZE_PATH];
     strcpy(backup_dir, backup_id);
     char *last_slash = strrchr(backup_dir, '/');
     if (last_slash) *last_slash = '\0';
-    char backup_log_path[2048];
+    char backup_log_path[MAX_SIZE_PATH];
     snprintf(backup_log_path, sizeof(backup_log_path), "%s/.backup_log", backup_dir);
     if (!file_exists(backup_log_path)) {
         return;
@@ -98,7 +99,7 @@ void restore_backup(const char *backup_id, const char *restore_dir) {
     create_directory(restore_dir);
 
     for (log_element *elt = logs.head; elt != NULL; elt = elt->next) {
-        char dedup_file[2048];
+        char dedup_file[MAX_SIZE_PATH];
         snprintf(dedup_file, sizeof(dedup_file), "%s/%s.dedup", backup_id, elt->path);
         if (!file_exists(dedup_file)) continue;
         FILE *fin = fopen(dedup_file, "rb");
@@ -108,7 +109,7 @@ void restore_backup(const char *backup_id, const char *restore_dir) {
         undeduplicate_file(fin, &chunks, &chunk_count);
         fclose(fin);
 
-        char restored_file[2048];
+        char restored_file[MAX_SIZE_PATH];
         snprintf(restored_file, sizeof(restored_file), "%s/%s", restore_dir, elt->path);
         write_restored_file(restored_file, chunks, chunk_count);
         for (int i=0; i<chunk_count; i++) {
@@ -136,7 +137,7 @@ void list_backups(const char *backup_dir) {
         if (strcmp(entry->d_name,".") == 0 || strcmp(entry->d_name,"..") == 0){
             continue;
         } 
-        char path[2048];
+        char path[MAX_SIZE_PATH];
         snprintf(path, sizeof(path), "%s/%s", backup_dir, entry->d_name);
         struct stat st;
         if (stat(path,&st) == 0 && S_ISDIR(st.st_mode)) {
