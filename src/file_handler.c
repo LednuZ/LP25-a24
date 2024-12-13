@@ -68,7 +68,7 @@ void update_backup_log(const char *logfile, log_t *logs){
 
     if (f && temp) {
         log_element *elt = logs->head ;
-        while(fgets(buffer, BUFFER_SIZE, f) && elt != NULL) {
+        while(fgets(buffer, BUFFER_SIZE, f)) {
             char *log = malloc(strlen(elt->path) + strlen(elt->date) + strlen(elt->md5) + 3) ;
             strcpy(log, elt->path) ;
             strcat(log, ";") ;
@@ -76,23 +76,30 @@ void update_backup_log(const char *logfile, log_t *logs){
             strcat(log, ";") ;
             strcat(log, elt->md5) ;
 
-            if (strcmp(buffer, log) == 0) {
-                fwrite(&buffer, BUFFER_SIZE, 1, f) ;
+            if (elt == NULL || strcmp(buffer, log) == 0) {
+                fwrite(&buffer, BUFFER_SIZE, 1, temp) ;
             } else {
-                fwrite(&log, strlen(log), 1, f) ;
+                fwrite(&log, strlen(log), 1, temp) ;
             }
 
             elt = elt->next ;
             free(log) ;
         }
 
-        if (elt == NULL) {
-            while (fgets(buffer, BUFFER_SIZE, f)) {
-                fwrite(&buffer, BUFFER_SIZE, 1, f) ;
-            }
-        } else if () {
-
+        while (elt != NULL) {
+            fwrite(&log, strlen(log), 1, f) ;
+            elt = elt->next ;
         }
+
+        fclose(f) ;
+        fclose(temp) ;
+
+        remove(logfile) ;
+        rename("temp.txt", logfile) ;
+    } else {
+        if (f) fclose(f) ;
+        if (temp) fclose(temp) ;
+        printf("Erreur : ouverture du fichier %s ou création du fichier temp.txt", logfile) ;
     }
 }
 
