@@ -100,6 +100,7 @@ void update_backup_log(const char *logfile, log_t *logs){
         if (f) fclose(f) ;
         if (temp) fclose(temp) ;
         printf("Erreur : ouverture du fichier %s ou création du fichier temp.txt", logfile) ;
+        return EXIT_FAILURE ;
     }
 }
 
@@ -108,6 +109,16 @@ void write_log_element(log_element *elt, FILE *logfile){
    * @param: elt - un élément log à écrire sur une ligne
    *         logfile - le chemin du fichier .backup_log
    */
+    FILE *f = fopen(logfile, "a") ;
+    char buffer[BUFFER_SIZE] ;
+
+    if (f) {
+        fprintf(f, "%s;%s;%s", elt->path, elt->mtime, elt->md5) ;
+        fclose(f) ;
+    } else {
+        printf("Erreur : ouverture du fichier %s", logfile) ;
+        return EXIT_FAILURE ;
+    }
 }
 
 void list_files(const char *path){
