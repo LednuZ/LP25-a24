@@ -32,7 +32,7 @@ int find_md5(Md5Entry *hash_table, unsigned char *md5) {
     *  @return: retourne l'index s'il trouve le md5 dans le tableau et -1 sinon
     */
     int i=0;
-    while(hash_table[i]){ //tant qu'il a des valeurs dans le tableau de hachage
+    while(hash_table){ //tant qu'il a des valeurs dans le tableau de hachage
         if (strcmp(hash_table[i].md5, *md5)==0) {
             return hash_table[i].index; //on retourne son index
         }
@@ -44,11 +44,13 @@ int find_md5(Md5Entry *hash_table, unsigned char *md5) {
 // Ajouter un MD5 dans la table de hachage
 void add_md5(Md5Entry *hash_table, unsigned char *md5, int index) {
     int i=0;
-    while(hash_table[i]) { //on recherche la derniere valeur de i ou rajouter le md5
-        ++i;
+    hash_table->md5 = malloc(16); // Taille d'un MD5
+    if (hash_table[i].md5 == NULL) {
+        fprintf(stderr, "Erreur : échec de l'allocation de mémoire pour le MD5.\n");
+        return;
     }
-    hash_table[i].index=index;
-    hash_table[i].md5=md5;
+    memcpy(hash_table[i].md5, md5, 16);
+    hash_table[i].index = index;
 }
 
 // Fonction pour convertir un fichier non dédupliqué en tableau de chunks
