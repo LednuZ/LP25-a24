@@ -163,5 +163,36 @@ void list_files(const char *path){
 }
 
 void copy_file(const char *src, const char *dest){
+    FILE *src_file = fopen(src, "rb") ; // Ouvre le fichier source en mode lecture binaire
+    if (!src_file) {
+        perror("Erreur d'ouverture du fichier source") ;
+        return EXIT_FAILURE ;
+    }
 
+    FILE *dest_file = fopen(dest, "wb") ; // Ouvre le fichier destination en mode écriture binaire
+    if (!dest_file) {
+        perror("Erreur d'ouverture du fichier destination") ;
+        fclose(src_file) ;
+        return EXIT_FAILURE ;
+    }
+
+    char buffer[BUFFER_SIZE] ;
+    size_t bytes_read ;
+
+    // Lire et écrire par blocs
+    while ((bytes_read = fread(buffer, 1, BUFFER_SIZE, src_file)) > 0) {
+        if (fwrite(buffer, 1, bytes_read, dest_file) != bytes_read) {
+            perror("Erreur d'écriture dans le fichier destination") ;
+            fclose(src_file) ;
+            fclose(dest_file) ;
+            return ;
+        }
+    }
+
+    if (ferror(src_file)) {
+        perror("Erreur de lecture du fichier source") ;
+    }
+
+    fclose(src_file) ;
+    fclose(dest_file) ;
 }
