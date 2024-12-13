@@ -6,7 +6,7 @@
 #include "file_handler.h"
 #include "deduplication.h"
 
-#define BUFFER_SIZE = 1024 ;
+#define BUFFER_SIZE 1024
 
 log_element create_element(char *path, char *mtime, char *md5) {
     log_element *new_elt = malloc(sizeof(log_element)) ;
