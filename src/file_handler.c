@@ -124,6 +124,42 @@ void write_log_element(log_element *elt, FILE *logfile){
 void list_files(const char *path){
   /* Implémenter la logique pour lister les fichiers présents dans un répertoire
   */
+    struct dirent *entry ;
+    DIR *dir = opendir(path) ;
+
+    if (dir) {
+        printf("Contenu du répertoire %s :\n", path) ;
+
+        while ((entry = readdir(dir)) != NULL) {
+            // Ignorer les entrées spéciales "." et ".."
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+                continue;
+            }
+    
+            // Construire le chemin complet
+            char full_path[1024] ;
+            snprintf(full_path, sizeof(full_path), "%s/%s", path, entry->d_name) ;
+    
+            // Vérifier si c'est un fichier ou un répertoire
+            struct stat file_stat ;
+            if (stat(full_path, &file_stat) == 0) {
+                if (S_ISDIR(file_stat.st_mode)) {
+                    printf("[Répertoire] %s\n", entry->d_name) ;
+                } else if (S_ISREG(file_stat.st_mode)) {
+                    printf("[Fichier] %s\n", entry->d_name) ;
+                } else {
+                    printf("[Autre] %s\n", entry->d_name) ;
+                }
+            } else {
+                perror("Erreur lors de l'obtention des informations sur le fichier") ;
+            }
+        }
+    
+        closedir(dir) ;
+    } else {
+        perror("Erreur d'ouverture du répertoire") ;
+        return EXIT_FAILURE ;
+    }
 }
 
 void copy_file(const char *src, const char *dest){
