@@ -3,12 +3,13 @@
 #include <string.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <sys/stat.h>
 #include "file_handler.h"
 #include "deduplication.h"
 
 #define BUFFER_SIZE 1024
 
-log_element create_element(char *path, char *mtime, char *md5) {
+log_element *create_element(char *path, char *mtime, char *md5) {
     log_element *new_elt = malloc(sizeof(log_element)) ;
     new_elt->path = strdup(path) ;
     new_elt->date = strdup(mtime) ;
@@ -30,7 +31,7 @@ log_t read_backup_log(const char *logfile){
     FILE *f = fopen(logfile, "r") ;
 
     if (f) {
-        while (fgets(buffer, BUFFER_SIZE, f) {
+        while (fgets(buffer, BUFFER_SIZE, f)) {
             buffer[strcspn(buffer, "\n")] = '\0';
 
             char *path = strtok(buffer, ";") ;
@@ -39,13 +40,13 @@ log_t read_backup_log(const char *logfile){
 
             log_element *ligne = create_element(path, mtime, md5) ;
 
-            if (backup->head == NULL) {
-                backup->head = ligne ;
-                backup->tail = ligne ;
+            if (backup.head == NULL) {
+                backup.head = ligne ;
+                backup.tail = ligne ;
             } else {
-                ligne->prev = backup->tail ;
-                backup->tail->next = ligne ;
-                backup->tail = ligne ;
+                ligne->prev = backup.tail ;
+                backup.tail->next = ligne ;
+                backup.tail = ligne ;
             }
         }
         fclose(f) ;
@@ -79,7 +80,7 @@ void update_backup_log(const char *logfile, log_t *logs){
             if (elt == NULL || strcmp(buffer, log) == 0) {
                 fwrite(&buffer, BUFFER_SIZE, 1, temp) ;
             } else {
-                fwrite(&log, strlen(log), 1, temp) ;
+                fwrite(log, strlen(log), 1, temp) ;
             }
 
             elt = elt->next ;
@@ -87,7 +88,7 @@ void update_backup_log(const char *logfile, log_t *logs){
         }
 
         while (elt != NULL) {
-            fwrite(&log, strlen(log), 1, f) ;
+            fprintf(temp, "%s;%s;%s", elt->path, elt->date, elt->md5);
             elt = elt->next ;
         }
 
@@ -113,7 +114,7 @@ void write_log_element(log_element *elt, FILE *logfile){
     char buffer[BUFFER_SIZE] ;
 
     if (f) {
-        fprintf(f, "%s;%s;%s", elt->path, elt->mtime, elt->md5) ;
+        fprintf(f, "%s;%s;%s", elt->path, elt->date, elt->md5) ;
         fclose(f) ;
     } else {
         printf("Erreur : ouverture du fichier %s", logfile) ;
