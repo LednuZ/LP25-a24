@@ -20,7 +20,7 @@
  * @param path Chemin du fichier ou répertoire.
  * @return 1 si le fichier existe, 0 sinon.
  */
-static int file_exists(const char *path) {
+int file_exists(const char *path) {
     struct stat st;
     return (stat(path, &st) == 0);
 }
@@ -30,7 +30,7 @@ static int file_exists(const char *path) {
  * @param path Chemin du répertoire à créer.
  * @return 0 en cas de succès, -1 en cas d'erreur.
  */
-static int create_directory(const char *path) {
+int create_directory(const char *path) {
     if (mkdir(path, 0755) == -1 && errno != EEXIST) {
         return -1;
     }
@@ -42,7 +42,7 @@ static int create_directory(const char *path) {
  * @param buffer Tampon où stocker l'horodatage.
  * @param size Taille du tampon buffer.
  */
-static void get_timestamp(char *buffer, size_t size) {
+void get_timestamp(char *buffer, size_t size) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     struct tm *tm_info = localtime(&tv.tv_sec);
@@ -57,7 +57,7 @@ static void get_timestamp(char *buffer, size_t size) {
  * @param last_backup_dir Tampon où stocker le chemin complet de la dernière sauvegarde.
  * @param size Taille du tampon last_backup_dir.
  */
-static void find_last_backup(const char *backup_dir, char *last_backup_dir, size_t size) {
+void find_last_backup(const char *backup_dir, char *last_backup_dir, size_t size) {
     DIR *dir = opendir(backup_dir);
     if (!dir) return;
     struct dirent *entry;
