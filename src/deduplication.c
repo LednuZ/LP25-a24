@@ -89,6 +89,17 @@ void deduplicate_file(FILE *file, Chunk *chunks, Md5Entry *hash_table) {
     *           chunks est le tableau de chunks initialisés qui contiendra les chunks issu du fichier
     *           hash_table est le tableau de hachage qui contient les MD5 et l'index des chunks unique
     */
+    // création de la hash_table
+    Md5Entry *hash_table = calloc(HASH_TABLE_SIZE, sizeof(Md5Entry));
+    // tampon de la taille d'un chunk (4096 octets = 4096 unsigned char)
+    unsigned char buffer[CHUNK_SIZE];
+    // Lecture d'un chunk
+    size_t taille_bloc = fread(buffer, 1, CHUNK_SIZE, file);
+    if (taille_bloc != CHUNK_SIZE) {
+        if (ferror(file)) {
+            perror("Erreur dans la lecture du fichier");
+        }
+    }
 
 }
 
