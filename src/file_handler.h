@@ -20,6 +20,7 @@ typedef struct {
 } log_t;
 
 
+log_element *create_element(char *path, char *mtime, char *md5);
 log_t read_backup_log(const char *logfile);
 void update_backup_log(const char *logfile, log_t *logs);
 void write_log_element(log_element *elt, FILE *logfile);
@@ -27,5 +28,5 @@ void list_files(const char *path);
 void copy_file(const char *src, const char *dest);
 
 #endif // FILE_HANDLER_H
-#endif // FILE_HANDLER_H
+
 

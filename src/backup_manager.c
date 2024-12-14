@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <openssl/md5.h>
 
-
 #define MAX_CHUNKS 10000
 #define MAX_SIZE_PATH 2048
 
@@ -125,7 +124,6 @@ void create_backup(const char *source_dir, const char *backup_dir) {
 
     // Duplique dernière sauvegarde si pas première (liens durs)
     if (!first_backup && last_backup_dir[0]!='\0') {
-        // Parcours last_backup_dir
         typedef struct {char path[2048];} dir_stack_entry;
         dir_stack_entry stack[1000];
         int top=0;
@@ -412,7 +410,7 @@ void restore_backup(const char *backup_id, const char *restore_dir) {
             if(p){*p='\0';create_directory_local(temp);}
         }
 
-        // Remplacement simplifié
+        // Écrit le fichier restauré
         write_restored_file(restored_file,chunks,chunk_count);
 
         for(int i=0;i<chunk_count;i++){free(chunks[i].data);}
