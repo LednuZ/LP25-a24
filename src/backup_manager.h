@@ -11,13 +11,13 @@
 #include <sys/stat.h>
 
 // Fonction vérifiant si un fichier existe
-static int file_exists(const char *path);
+int file_exists(const char *path);
 // Fonction qui créé un dossier
-static int create_directory(const char *path);
+int create_directory(const char *path);
 // Fonction qui génère un horodatage sous la forme YYYY-MM-DD-hh:mm:ss.sss. 
-static void get_timestamp(char *buffer, size_t size);
+void get_timestamp(char *buffer, size_t size);
 // Fonction qui trouve la dernière sauvegarde (répertoire horodaté le plus récent) dans backup_dir.
-static void find_last_backup(const char *backup_dir, char *last_backup_dir, size_t size)
+void find_last_backup(const char *backup_dir, char *last_backup_dir, size_t size)
 // Fonction pour créer un nouveau backup incrémental
 void create_backup(const char *source_dir, const char *backup_dir);
 // Fonction pour restaurer une sauvegarde
