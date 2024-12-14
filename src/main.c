@@ -73,12 +73,33 @@ int main(int argc, char *argv[]) {
     }
 
     if (backup_flag + restore_flag + list_flag != 1) {
-        fprintf(stderr, "Error: Vous devez utiliser une seule option parmi : --backup, --restore, --list_backups.\n");
+        fprintf(stderr, "Erreur: Vous devez utiliser une seule option parmi : --backup, --restore, --list_backups.\n");
         return EXIT_FAILURE;
     }
 
     if (verbose_flag) {
         printf("Mode verbose actif\n");
+    }
+
+    if (backup_flag) {
+        if (!source_dir || !dest_dir) {
+            fprintf(stderr, "Erreur: Vous devez spécifier les dossiers source et destination.\n");
+            return EXIT_FAILURE;
+        } else {
+            // Appel fonction backup
+        }
+    }
+
+    if (restore_flag) {
+        if (!source_dir) {
+            fprintf(stderr, "Erreur: Vous devez spécifier le dossier de sauvergarde avec l'option --source.\n");
+            return EXIT_FAILURE;
+        } else {
+            if (!dest_dir) {
+                dest_dir = '/';
+            }
+            // Appel fonction backup
+        }
     }
 
     return EXIT_SUCCESS;
