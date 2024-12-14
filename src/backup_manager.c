@@ -16,6 +16,8 @@
 #define MAX_CHUNKS 10000
 #define MAX_SIZE_PATH 2048
 
+extern int dry_run_flag;
+
 /**
  * @brief Vérifie si un fichier ou un répertoire existe.
  * @param path Chemin du fichier ou répertoire.
