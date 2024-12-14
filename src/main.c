@@ -102,5 +102,14 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    if (list_flag) {
+        if (!source_dir) {
+            fprintf(stderr, "Erreur: Vous devez spécifier le dossier de sauvergarde avec l'option --source.\n");
+            return EXIT_FAILURE;
+        } else {
+            list_backups(source_dir);
+        }
+    }
+
     return EXIT_SUCCESS;
 }
