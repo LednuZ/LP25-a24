@@ -15,8 +15,6 @@
 #define MAX_CHUNKS 10000
 #define MAX_SIZE_PATH 2048
 
-extern int dry_run_flag;
-
 /**
  * @brief Teste l'existence d'un fichier ou répertoire.
  */
