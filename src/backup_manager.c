@@ -1,4 +1,22 @@
 #include "backup_manager.h"
+#include "deduplication.h"
+#include "file_handler.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dirent.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <errno.h>
+#include <unistd.h>
+#include <openssl/md5.h>
+
+
+#define MAX_CHUNKS 10000
+#define MAX_SIZE_PATH 2048
+
+extern int dry_run_flag;
 
 /**
  * @brief Teste l'existence d'un fichier ou répertoire.
@@ -333,11 +351,19 @@ void backup_file(const char *filename) {
     Md5Entry hash_table[HASH_TABLE_SIZE];memset(hash_table,0,sizeof(hash_table));
     deduplicate_file(file,chunks,hash_table);
     fclose(file);
-    int chunk_count=0;for(int i=0;i<MAX_CHUNKS;i++){if(!chunks[i].data)break;chunk_count++;}
+
+    int chunk_count=0;
+    for(int i=0;i<MAX_CHUNKS;i++){
+        if(!chunks[i].data)break;
+        chunk_count++;
+    }
+
     char output_filename[MAX_SIZE_PATH];
     snprintf(output_filename,sizeof(output_filename),"%s.dedup",filename);
     write_backup_file(output_filename,chunks,chunk_count);
-    for(int i=0;i<chunk_count;i++){free(chunks[i].data);}
+    for(int i=0;i<chunk_count;i++){
+        free(chunks[i].data);
+    }
 }
 
 void write_restored_file(const char *output_filename, Chunk *chunks, int chunk_count) {
@@ -386,19 +412,17 @@ void restore_backup(const char *backup_id, const char *restore_dir) {
             if(p){*p='\0';create_directory_local(temp);}
         }
 
-        // Pour simplifier, on remplace toujours si existe
+        // Remplacement simplifié
         write_restored_file(restored_file,chunks,chunk_count);
+
         for(int i=0;i<chunk_count;i++){free(chunks[i].data);}
         free(chunks);
     }
 }
 
 /**
- * @brief Liste les sauvegardes disponibles dans un répertoire.
- *
- * Affiche les noms de répertoires de sauvegarde (horodatés) présents dans backup_dir.
- *
- * @param backup_dir Répertoire contenant les différentes sauvegardes.
+ * @brief Liste les sauvegardes.
+ * @see backup_manager.h
  */
 void list_backups(const char *backup_dir) {
     DIR *dir = opendir(backup_dir);
@@ -408,14 +432,15 @@ void list_backups(const char *backup_dir) {
     }
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(entry->d_name,".") == 0 || strcmp(entry->d_name,"..") == 0){
+        if (strcmp(entry->d_name,".") ==0 || strcmp(entry->d_name,"..")==0) {
             continue;
-        } 
+        }
+        if (strcmp(entry->d_name,".backup_log")==0) continue;
         char path[MAX_SIZE_PATH];
         snprintf(path, sizeof(path), "%s/%s", backup_dir, entry->d_name);
         struct stat st;
-        if (stat(path,&st) == 0 && S_ISDIR(st.st_mode)) {
-            printf("%s\n", entry->d_name);
+        if (stat(path,&st)==0 && S_ISDIR(st.st_mode)){
+            printf("%s\n",entry->d_name);
         }
     }
     closedir(dir);
