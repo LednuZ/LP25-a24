@@ -109,7 +109,8 @@ void deduplicate_file(FILE *file, Chunk *chunks, Md5Entry *hash_table) {
         compute_md5(buffer, taille_bloc, md5);
         int md5_index = find_md5(hash_table, md5);
         if (md5_index != -1) {
-            parcours_chunk->data = index;
+            parcours_chunk->data = malloc(sizeof(unsigned int));
+            memcpy(parcours_chunk->data, &md5_index, sizeof(int));
             memcpy(&(parcours_chunk->md5), md5, MD5_DIGEST_LENGTH);
         } else {
             add_md5(hash_table, md5, index);
@@ -131,4 +132,42 @@ void undeduplicate_file(FILE *file, Chunk **chunks, int *chunk_count) {
     *           chunks représente le tableau de chunk qui contiendra les chunks restauré depuis filename
     *           chunk_count est un compteur du nombre de chunk restauré depuis le fichier filename
     */
+    unsigned char buffer[CHUNK_SIZE];
+    fread(chunk_count, 1, sizeof(int), file);
+    *chunks = calloc(CHUNK_SIZE, sizeof(Chunk));
+    Chunk *parcours_chunk = *chunks;
+    unsigned int chunk_size_on_file;
+    unsigned char chunk_md5[MD5_DIGEST_LENGTH];
+    unsigned char chunk_md5_computed[MD5_DIGEST_LENGTH];
+    unsigned char *chunk_data;
+    for (int i=0; i<chunk_count; ++i) {
+        fread(chunk_md5, 1, MD5_DIGEST_LENGTH, file); // lecture du md5
+        memcpy(&(parcours_chunk->md5),chunk_md5, MD5_DIGEST_LENGTH);
+        fread(chunk_size_on_file, 1, sizeof(unsigned int), file);
+        if (chunk_size_on_file != CHUNK_SIZE && chunk_size_on_file == sizeof(unsigned int)) { //savoir si le chunk est un index
+            chunk_data = malloc(sizeof(unsigned int));
+            fread(chunk_data, 1, sizeof(unsigned int), file);
+            compute_md5(chunk_data, sizeof(unsigned int),chunk_md5_computed);
+            if (hash_md5(chunk_md5) == hash_md5(chunk_md5_computed)) { // comparaison rapide si différents
+                if (strcmp(chunk_md5, chunk_md5_computed) == 0) { // chunks fait une longueur de 4 octets
+                    memcpy(parcours_chunk->data, chunk_data, sizeof(unsigned int));
+                } else {
+                    memcpy(parcours_chunk->data, (*chunks + *chunk_data)->data, sizeof CHUNK_SIZE);
+                } 
+            }
+            free(chunk_data);
+        } else {
+            if (chunk_size_on_file != CHUNK_SIZE) { //Cas ou on est dans le dernier chunk incomplet (pas à 4096o)
+                chunk_data = malloc(chunk_size_on_file);
+                fread(chunk_data, 1, chunk_size_on_file, file);
+                memcpy(parcours_chunk->data, chunk_data, chunk_size_on_file);
+                free(chunk_data);
+            } else { // Cas général : on se situe dans  un chunk de 4096 octets
+                chunk_data = malloc(CHUNK_SIZE);
+                fread(chunk_data, 1, CHUNK_SIZE, file);
+                memcpy(parcours_chunk->data, chunk_data, CHUNK_SIZE);
+                free(chunk_data);
+            }
+        }
+    }
 }
