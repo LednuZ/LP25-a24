@@ -7,8 +7,8 @@
 #include "backup_manager.h"
 #include "network.h"
 
-static int verbose_flag = 0;
-static int dry_run_flag = 0;
+int verbose_flag = 0;
+int dry_run_flag = 0;
 static int backup_flag = 0;
 static int restore_flag = 0;
 static int list_flag = 0;
@@ -18,6 +18,7 @@ int main(int argc, char *argv[]) {
         {"backup", no_argument, &backup_flag, 'b'},
         {"restore", no_argument, &restore_flag, 'r'},
         {"list-backups", no_argument, &list_flag, 'l'},
+        {"dry-run", no_argument, &dry_run_flag, 'y'},
         {"d-server", required_argument, NULL, 'j'},
         {"d-port", required_argument, NULL, 'k'},
         {"s-server", required_argument, NULL, 'm'},
@@ -31,8 +32,8 @@ int main(int argc, char *argv[]) {
     int option_index = 0;
     int opt;
 
-    const char *source_dir = NULL, *dest_dir = NULL, *server_ip = NULL;
-    int server_port = 0;
+    const char *source_dir = NULL, *dest_dir = NULL, *dest_server_ip = NULL, *src_server_ip = NULL;
+    int dest_server_port = 0, src_server_port = 0;
 
     while ((opt = getopt_long(argc, argv, "b:r:l", long_options, &option_index)) != -1) {
         switch (opt) {
@@ -45,17 +46,20 @@ int main(int argc, char *argv[]) {
             case 'l': // --list-backups
                 list_flag = 1;
                 break;
+            case 'y': // --dry-run
+                dry_run_flag = 1;
+                break;
             case 'j': // --d-server
-                server_ip = optarg;
+                dest_server_ip = optarg;
                 break;
             case 'k': // --d-port
-                server_port = optarg;
+                dest_server_port = atoi(optarg);
                 break;
             case 'm': // --s-server
-                server_ip = optarg;
+                src_server_ip = optarg;
                 break;
             case 'n': // --s-port
-                server_port = optarg;
+                src_server_port = atoi(optarg);
                 break;
             case 'd': // --dest
                 dest_dir = optarg;
@@ -81,12 +85,16 @@ int main(int argc, char *argv[]) {
         printf("Mode verbose actif\n");
     }
 
+    if (dry_run_flag) {
+        printf("Mode dry-run actif\n");
+    }
+
     if (backup_flag) {
         if (!source_dir || !dest_dir) {
             fprintf(stderr, "Erreur: Vous devez spécifier les dossiers source et destination.\n");
             return EXIT_FAILURE;
         } else {
-            // Appel fonction backup
+            create_backup(source_dir, dest_dir);
         }
     }
 
@@ -98,7 +106,7 @@ int main(int argc, char *argv[]) {
             if (!dest_dir) {
                 dest_dir = '/';
             }
-            // Appel fonction backup
+            restore_backup(source_dir, dest_dir);
         }
     }
 
