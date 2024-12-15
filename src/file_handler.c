@@ -160,7 +160,7 @@ void write_log_element(log_element *elt, FILE *logfile){
    * @param: elt - un élément log à écrire sur une ligne
    *         logfile - le chemin du fichier .backup_log
    */
-    if (f) {
+    if (logfile) {
         if (dry_run_flag) {
             fprintf(logfile, "%s;%s;%s", elt->path, elt->date, elt->md5) ;
         }
