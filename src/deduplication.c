@@ -111,7 +111,7 @@ void deduplicate_file(FILE *file, Chunk *chunks, Md5Entry *hash_table) {
             parcours_chunk->data = malloc(sizeof(unsigned int));
             memcpy(parcours_chunk->data, &md5_index, sizeof(int));
             memcpy(&(parcours_chunk->md5), md5, MD5_DIGEST_LENGTH);
-            parcours_chunk->lenght = sizeof(int);
+            parcours_chunk->lenght = sizeof(unsigned int);
 
         } else {
             add_md5(hash_table, md5, index);
