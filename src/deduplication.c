@@ -49,7 +49,7 @@ int find_md5(Md5Entry *hash_table, unsigned char *md5) {
         }
 
         if (liste_non_finie) { // On vérifie d'abord qu'on puisse acceder à parcours->md5
-            if (strcmp(parcours->md5, *md5)==0) {
+            if ((hash_md5(&(parcours->md5))) == hash_md5(md5)) {
                 return parcours->index; //on retourne son index
             }
             ++parcours; // aller à l'adresse suivante
@@ -79,7 +79,7 @@ void add_md5(Md5Entry *hash_table, unsigned char *md5, int index) {
             ++parcours; // aller à l'adresse suivante
         }
     }
-    memcpy(&(parcours->md5), md5, 16);
+    memcpy(&(parcours->md5), md5, MD5_DIGEST_LENGTH);
     parcours->index = index;
 }
 
@@ -89,17 +89,35 @@ void deduplicate_file(FILE *file, Chunk *chunks, Md5Entry *hash_table) {
     *           chunks est le tableau de chunks initialisés qui contiendra les chunks issu du fichier
     *           hash_table est le tableau de hachage qui contient les MD5 et l'index des chunks unique
     */
-    // création de la hash_table
-    Md5Entry *hash_table = calloc(HASH_TABLE_SIZE, sizeof(Md5Entry));
+
     // tampon de la taille d'un chunk (4096 octets = 4096 unsigned char)
     unsigned char buffer[CHUNK_SIZE];
-    // Lecture d'un chunk
-    size_t taille_bloc = fread(buffer, 1, CHUNK_SIZE, file);
-    if (taille_bloc != CHUNK_SIZE) {
-        if (ferror(file)) {
-            perror("Erreur dans la lecture du fichier");
+    unsigned int index = 0;
+    Chunk *parcours_chunk = chunks;
+    while (!feof(file)) {
+        // Lecture d'un chunk
+        size_t taille_bloc = fread(buffer, 1, CHUNK_SIZE, file);
+        if (taille_bloc != CHUNK_SIZE) {
+            if (ferror(file)) {
+                perror("Erreur dans la lecture du fichier");
+                return;
+            }
         }
-    }
+        unsigned char *md5 = malloc(16);
+        compute_md5(buffer, taille_bloc, md5);
+        int md5_index = find_md5(hash_table, md5);
+        if (md5_index != -1) {
+            parcours_chunk->data = NULL;
+            memcpy(&(parcours_chunk->md5), md5, MD5_DIGEST_LENGTH);
+        } else {
+            add_md5(hash_md5, md5, index);
+            memcpy(&(parcours_chunk->md5), md5, MD5_DIGEST_LENGTH);
+            parcours_chunk->data = malloc(CHUNK_SIZE);
+            memcpy(parcours_chunk->data, buffer, CHUNK_SIZE);
+        }
+        ++parcours_chunk;
+        ++index;
+    }  
 
 }
 
