@@ -50,7 +50,9 @@ int find_md5(Md5Entry *hash_table, unsigned char *md5) {
 
         if (liste_non_finie) { // On vérifie d'abord qu'on puisse acceder à parcours->md5
             if ((hash_md5(&(parcours->md5))) == hash_md5(md5)) {
-                return parcours->index; //on retourne son index
+                if (strcmp(&(parcours->md5), md5) == 0) {
+                    return parcours->index; //on retourne son index
+                }
             }
             ++parcours; // aller à l'adresse suivante
         }
@@ -107,10 +109,10 @@ void deduplicate_file(FILE *file, Chunk *chunks, Md5Entry *hash_table) {
         compute_md5(buffer, taille_bloc, md5);
         int md5_index = find_md5(hash_table, md5);
         if (md5_index != -1) {
-            parcours_chunk->data = NULL;
+            parcours_chunk->data = index;
             memcpy(&(parcours_chunk->md5), md5, MD5_DIGEST_LENGTH);
         } else {
-            add_md5(hash_md5, md5, index);
+            add_md5(hash_table, md5, index);
             memcpy(&(parcours_chunk->md5), md5, MD5_DIGEST_LENGTH);
             parcours_chunk->data = malloc(CHUNK_SIZE);
             memcpy(parcours_chunk->data, buffer, CHUNK_SIZE);
