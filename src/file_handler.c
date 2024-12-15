@@ -91,66 +91,70 @@ void update_backup_log(const char *logfile, log_t *logs){
   */
     char buffer[BUFFER_SIZE] ;
     FILE *f = fopen(logfile, "r") ;
-    FILE *temp = fopen("temp.txt", "w") ;
+    if (!f) {
+        perror("Erreur : échec ouverture du fichier en paramètre") ;
+        return ;
+    }
 
+    FILE *temp = fopen("temp.txt", "w") ;
+    if (!temp) {
+        perror("Erreur : échec ouverture du fichier temp.txt") ;
+        fclose(f) ;
+        return ;
+    }
+
+ 
     if (verbose_flag) {
         printf("[INFO] Mise à jour du fichier %s\n", logfile);
     }
+ 
+    log_element *elt = logs->head ;
 
-    if (f && temp) {
-        log_element *elt = logs->head ;
+    // Parcourt chaque ligne et effectue la mise à jour si nécessaire
+    while(fgets(buffer, BUFFER_SIZE, f)) {
+        char *log = malloc(strlen(elt->path) + strlen(elt->date) + strlen(elt->md5) + 3) ;
+        strcpy(log, elt->path) ;
+        strcat(log, ";") ;
+        strcat(log, elt->date) ;
+        strcat(log, ";") ;
+        strcat(log, elt->md5) ;
 
-        // Parcourt chaque ligne et effectue la mise à jour si nécessaire
-        while(fgets(buffer, BUFFER_SIZE, f)) {
-            char *log = malloc(strlen(elt->path) + strlen(elt->date) + strlen(elt->md5) + 3) ;
-            strcpy(log, elt->path) ;
-            strcat(log, ";") ;
-            strcat(log, elt->date) ;
-            strcat(log, ";") ;
-            strcat(log, elt->md5) ;
-
-            if (elt == NULL || strcmp(buffer, log) == 0) {
-                if (verbose_flag) {
-                    printf("[INFO] Conservation de la ligne %s\n", buffer);
-                }
-                fwrite(&buffer, BUFFER_SIZE, 1, temp) ;
-            } else {
-                if (verbose_flag) {
-                    printf("[INFO] Mise à jour de la ligne %s en %s\n", buffer, log);
-                }
-                fwrite(log, strlen(log), 1, temp) ;
-            }
-
-            elt = elt->next ;
-            free(log) ;
-        }
-
-        // Ajoute les nouvelles entrées restantes
-        while (elt != NULL) {
-            fprintf(temp, "%s;%s;%s", elt->path, elt->date, elt->md5);
-            elt = elt->next ;
-        }
-
-        fclose(f) ;
-        fclose(temp) ;
-
-        // Remplace le fichier original par le fichier temporaire
-        if (dry_run_flag) {
+        if (elt == NULL || strcmp(buffer, log) == 0) {
             if (verbose_flag) {
-                printf("[DRY-RUN] Remplacement du fichier %s par temp.txt\n", logfile);
+                printf("[INFO] Conservation de la ligne %s\n", buffer);
             }
+            fwrite(&buffer, BUFFER_SIZE, 1, temp) ;
         } else {
-            remove(logfile) ;
-            rename("temp.txt", logfile) ;
             if (verbose_flag) {
-                printf("[INFO] Mise à jour du fichier %s effectuée\n", logfile);
+                printf("[INFO] Mise à jour de la ligne %s en %s\n", buffer, log);
             }
+            fwrite(log, strlen(log), 1, temp) ;
+        }
+
+        elt = elt->next ;
+        free(log) ;
+    }
+
+    // Ajoute les nouvelles entrées restantes
+    while (elt != NULL) {
+        fprintf(temp, "%s;%s;%s", elt->path, elt->date, elt->md5);
+        elt = elt->next ;
+    }
+
+    fclose(f) ;
+    fclose(temp) ;
+
+    // Remplace le fichier original par le fichier temporaire
+    if (dry_run_flag) {
+        if (verbose_flag) {
+            printf("[DRY-RUN] Remplacement du fichier %s par temp.txt\n", logfile);
         }
     } else {
-        if (f) fclose(f) ;
-        if (temp) fclose(temp) ;
-        perror("Erreur : Echec de l'ouverture du fichier en paramètre ou de la création du fichier temp.txt\n") ;
-        return ;
+        remove(logfile) ;
+        rename("temp.txt", logfile) ;
+        if (verbose_flag) {
+            printf("[INFO] Mise à jour du fichier %s effectuée\n", logfile);
+        }
     }
 }
 
