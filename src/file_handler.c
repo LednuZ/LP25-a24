@@ -60,7 +60,7 @@ log_t read_backup_log(const char *logfile){
             char *md5 = strtok(NULL, ";") ;
 
             if (verbose_flag) {
-                printf("[INFO] Lecture de %s : %s, %s, %s\n", path, mtime, md5);
+                printf("[INFO] Lecture de %s : %s, %s, %s\n", logfile, path, mtime, md5);
             }
 
             // Crée un nouvel élément et l'ajoute à la liste chaînée
@@ -78,7 +78,7 @@ log_t read_backup_log(const char *logfile){
         fclose(f) ;
         return backup ;
     } else {
-        perror("Erreur : ouverture du fichier %s\n", logfile) ;
+        perror("Erreur : ouverture du fichier\n") ;
         return backup ;
     }
 }
@@ -149,8 +149,8 @@ void update_backup_log(const char *logfile, log_t *logs){
     } else {
         if (f) fclose(f) ;
         if (temp) fclose(temp) ;
-        perror("Erreur : ouverture du fichier %s ou création du fichier temp.txt\n", logfile) ;
-        return EXIT_FAILURE ;
+        perror("Erreur : Echec de l'ouverture du fichier en paramètre ou de la création du fichier temp.txt\n") ;
+        return ;
     }
 }
 
@@ -160,24 +160,17 @@ void write_log_element(log_element *elt, FILE *logfile){
    * @param: elt - un élément log à écrire sur une ligne
    *         logfile - le chemin du fichier .backup_log
    */
-    FILE *f = fopen(logfile, "a") ;
-    char buffer[BUFFER_SIZE] ;
-
-    if (verbose_flag) {
-        printf("[INFO] Ecriture de %s dans le fichier %s\n", elt, logfile);
-    }
-
     if (f) {
         if (dry_run_flag) {
             fprintf(f, "%s;%s;%s", elt->path, elt->date, elt->md5) ;
         }
         if (verbose_flag) {
-            printf("[INFO] Écriture de l'élément log dans %s: %s, %s, %s\n", logfile, elt->path, elt->date, elt->md5);
+            printf("[INFO] Écriture de l'élément log %s, %s, %s\n", elt->path, elt->date, elt->md5);
         }
         fclose(f) ;
     } else {
-        printf("Erreur : ouverture du fichier %s\n", logfile) ;
-        return EXIT_FAILURE ;
+        printf("Erreur : échec ouverture du fichier\n") ;
+        return ;
     }
 }
 
@@ -213,14 +206,14 @@ void list_files(const char *path){
                     printf("[Autre] %s\n", entry->d_name) ;
                 }
             } else {
-                perror("Erreur lors de l'obtention des informations sur le fichier %s\n", full_path) ;
+                perror("Erreur : échec obtention des informations sur le fichier\n") ;
             }
         }
     
         closedir(dir) ;
     } else {
-        perror("Erreur d'ouverture du répertoire %s\n", path) ;
-        return EXIT_FAILURE ;
+        perror("Erreur : échec ouverture du répertoire\n") ;
+        return ;
     }
 }
 
@@ -232,15 +225,15 @@ void copy_file(const char *src, const char *dest){
   */
     FILE *src_file = fopen(src, "rb") ; // Ouvre le fichier source en mode lecture binaire
     if (!src_file) {
-        perror("Erreur d'ouverture du fichier source %s\n", src) ;
-        return EXIT_FAILURE ;
+        perror("Erreur : échec ouverture du fichier source\n") ;
+        return ;
     }
 
     FILE *dest_file = fopen(dest, "wb") ; // Ouvre le fichier destination en mode écriture binaire
     if (!dest_file) {
-        perror("Erreur d'ouverture du fichier destination %s\n", dest) ;
+        perror("Erreur : échec ouverture du fichier destination\n") ;
         fclose(src_file) ;
-        return EXIT_FAILURE ;
+        return ;
     }
 
     char buffer[BUFFER_SIZE] ;
@@ -256,7 +249,7 @@ void copy_file(const char *src, const char *dest){
             perror("Erreur d'écriture dans le fichier destination\n") ;
             fclose(src_file) ;
             fclose(dest_file) ;
-            return EXIT_FAILURE ;
+            return ;
         }
     }
 
