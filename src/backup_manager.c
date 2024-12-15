@@ -8,6 +8,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <unistd.h>
 #include <openssl/md5.h>
@@ -76,9 +77,9 @@ static void get_timestamp_local(char *buffer, size_t size)
     gettimeofday(&tv, NULL);
     struct tm *tm_info = localtime(&tv.tv_sec);
     snprintf(
-        buffer, size, "%04d-%02d-%02d-%02d:%02d:%02d.%03ld",
+        buffer, size, "%04d-%02d-%02d-%02d:%02d:%02d.%03d",
         tm_info->tm_year + 1900, tm_info->tm_mon + 1, tm_info->tm_mday,
-        tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec, tv.tv_usec / 1000
+        tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec, (int)(tv.tv_usec / 1000)
     );
 
     if (verbose_flag) {
