@@ -20,11 +20,17 @@ typedef struct {
 } log_t;
 
 
+// Fonction permettant de créer une structure log_element
 log_element *create_element(char *path, char *mtime, char *md5);
+// Fonction permettant de lire un fichier .backup_log
 log_t read_backup_log(const char *logfile);
+// Fonction permettant de mettre à jour le fichier .backup_log
 void update_backup_log(const char *logfile, log_t *logs);
+// Ecrit un élément log dans le fichier .backup_log
 void write_log_element(log_element *elt, FILE *logfile);
+// Liste les fichiers présents dans un répertoire
 void list_files(const char *path);
+// Copie un fichier depuis une source vers une destination
 void copy_file(const char *src, const char *dest);
 
 #endif // FILE_HANDLER_H
