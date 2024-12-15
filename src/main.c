@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
     const char *source_dir = NULL, *dest_dir = NULL, *dest_server_ip = NULL, *src_server_ip = NULL;
     int dest_server_port = 0, src_server_port = 0;
 
-    while ((opt = getopt_long(argc, argv, "b:r:l", long_options, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "brlyj:k:m:n:d:s:v", long_options, &option_index)) != -1) {
         switch (opt) {
             case 'b': // --backup
                 backup_flag = 1;
