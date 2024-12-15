@@ -9,6 +9,10 @@
 
 #define BUFFER_SIZE 1024
 
+// Récupère les valeurs de verbose_flag et dry_run_flag
+extern int verbose_flag;
+extern int dry_run_flag;
+
 // Fonction permettant de créer une structure log_element
 log_element *create_element(char *path, char *mtime, char *md5) {
  /* Crée une structure log_element
