@@ -103,12 +103,7 @@ void deduplicate_file(FILE *file, Chunk *chunks, Md5Entry *hash_table) {
     while (!feof(file)) {
         // Lecture d'un chunk
         size_t taille_bloc = fread(buffer, 1, CHUNK_SIZE, file);
-        if (taille_bloc != CHUNK_SIZE) {
-            if (ferror(file)) {
-                perror("Erreur dans la lecture du fichier");
-                return;
-            }
-        }
+        
         unsigned char *md5 = malloc(16);
         compute_md5(buffer, taille_bloc, md5);
         int md5_index = find_md5(hash_table, md5);
@@ -116,11 +111,14 @@ void deduplicate_file(FILE *file, Chunk *chunks, Md5Entry *hash_table) {
             parcours_chunk->data = malloc(sizeof(unsigned int));
             memcpy(parcours_chunk->data, &md5_index, sizeof(int));
             memcpy(&(parcours_chunk->md5), md5, MD5_DIGEST_LENGTH);
+            parcours_chunk->lenght = sizeof(int);
+
         } else {
             add_md5(hash_table, md5, index);
             memcpy(&(parcours_chunk->md5), md5, MD5_DIGEST_LENGTH);
-            parcours_chunk->data = malloc(CHUNK_SIZE);
-            memcpy(parcours_chunk->data, buffer, CHUNK_SIZE);
+            parcours_chunk->data = malloc(taille_bloc);
+            memcpy(parcours_chunk->data, buffer, taille_bloc);
+            parcours_chunk->lenght = taille_bloc;
         }
         ++parcours_chunk;
         ++index;
