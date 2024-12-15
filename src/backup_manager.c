@@ -166,7 +166,7 @@ void write_backup_file(const char *output_filename, Chunk *chunks, int chunk_cou
 
     fwrite(&chunk_count, sizeof(int), 1, file);
     for (int i = 0; i < chunk_count; i++) {
-        size_t chunk_size = sizeof(chunks[i].data);
+        size_t chunk_size = chunks[i].length;
         fwrite(chunks[i].md5, MD5_DIGEST_LENGTH, 1, file);
         fwrite(&chunk_size, sizeof(size_t), 1, file);
         fwrite(chunks[i].data, 1, chunk_size, file);
