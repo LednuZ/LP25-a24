@@ -28,6 +28,10 @@ log_element *create_element(char *path, char *mtime, char *md5) {
     new_elt->next = NULL ;
     new_elt->prev = NULL ;
 
+    if (verbose_flag) {
+        printf("[INFO] Création d'un nouvel élément log : %s, %s, %s\n", path, mtime, md5);
+    }
+
     return new_elt ;
 }
 
@@ -41,6 +45,10 @@ log_t read_backup_log(const char *logfile){
     char buffer[BUFFER_SIZE] ;
     FILE *f = fopen(logfile, "r") ;
 
+    if (verbose_flag) {
+        printf("[INFO] Lecture du fichier %s\n", logfile);
+    }
+
     if (f) {
         while (fgets(buffer, BUFFER_SIZE, f)) {
             // Supprime le saut de ligne
@@ -50,6 +58,10 @@ log_t read_backup_log(const char *logfile){
             char *path = strtok(buffer, ";") ;
             char *mtime = strtok(NULL, ";") ;
             char *md5 = strtok(NULL, ";") ;
+
+            if (verbose_flag) {
+                printf("[INFO] Lecture de %s : %s, %s, %s\n", path, mtime, md5);
+            }
 
             // Crée un nouvel élément et l'ajoute à la liste chaînée
             log_element *ligne = create_element(path, mtime, md5) ;
@@ -66,7 +78,7 @@ log_t read_backup_log(const char *logfile){
         fclose(f) ;
         return backup ;
     } else {
-        printf("Erreur : ouverture du fichier %s\n", logfile) ;
+        perror("Erreur : ouverture du fichier %s\n", logfile) ;
         return backup ;
     }
 }
@@ -81,6 +93,10 @@ void update_backup_log(const char *logfile, log_t *logs){
     FILE *f = fopen(logfile, "r") ;
     FILE *temp = fopen("temp.txt", "w") ;
 
+    if (verbose_flag) {
+        printf("[INFO] Mise à jour du fichier %s\n", logfile);
+    }
+
     if (f && temp) {
         log_element *elt = logs->head ;
 
@@ -94,8 +110,14 @@ void update_backup_log(const char *logfile, log_t *logs){
             strcat(log, elt->md5) ;
 
             if (elt == NULL || strcmp(buffer, log) == 0) {
+                if (verbose_flag) {
+                    printf("[INFO] Conservation de la ligne %s\n", buffer);
+                }
                 fwrite(&buffer, BUFFER_SIZE, 1, temp) ;
             } else {
+                if (verbose_flag) {
+                    printf("[INFO] Mise à jour de la ligne %s en %s\n", buffer, log);
+                }
                 fwrite(log, strlen(log), 1, temp) ;
             }
 
@@ -113,12 +135,21 @@ void update_backup_log(const char *logfile, log_t *logs){
         fclose(temp) ;
 
         // Remplace le fichier original par le fichier temporaire
-        remove(logfile) ;
-        rename("temp.txt", logfile) ;
+        if (dry_run_flag) {
+            if (verbose_flag) {
+                printf("[DRY-RUN] Remplacement du fichier %s par temp.txt\n", logfile);
+            }
+        } else {
+            remove(logfile) ;
+            rename("temp.txt", logfile) ;
+            if (verbose_flag) {
+                printf("[INFO] Mise à jour du fichier %s effectuée\n", logfile);
+            }
+        }
     } else {
         if (f) fclose(f) ;
         if (temp) fclose(temp) ;
-        printf("Erreur : ouverture du fichier %s ou création du fichier temp.txt\n", logfile) ;
+        perror("Erreur : ouverture du fichier %s ou création du fichier temp.txt\n", logfile) ;
         return EXIT_FAILURE ;
     }
 }
@@ -132,8 +163,17 @@ void write_log_element(log_element *elt, FILE *logfile){
     FILE *f = fopen(logfile, "a") ;
     char buffer[BUFFER_SIZE] ;
 
+    if (verbose_flag) {
+        printf("[INFO] Ecriture de %s dans le fichier %s\n", elt, logfile);
+    }
+
     if (f) {
-        fprintf(f, "%s;%s;%s", elt->path, elt->date, elt->md5) ;
+        if (dry_run_flag) {
+            fprintf(f, "%s;%s;%s", elt->path, elt->date, elt->md5) ;
+        }
+        if (verbose_flag) {
+            printf("[INFO] Écriture de l'élément log dans %s: %s, %s, %s\n", logfile, elt->path, elt->date, elt->md5);
+        }
         fclose(f) ;
     } else {
         printf("Erreur : ouverture du fichier %s\n", logfile) ;
@@ -206,13 +246,17 @@ void copy_file(const char *src, const char *dest){
     char buffer[BUFFER_SIZE] ;
     size_t bytes_read ;
 
+    if (verbose_flag) {
+        printf("[INFO] Copie du fichier %s dans le fichier %s\n", src, dest);
+    }
+
     // Lire et écrire par blocs
     while ((bytes_read = fread(buffer, 1, BUFFER_SIZE, src_file)) > 0) {
         if (fwrite(buffer, 1, bytes_read, dest_file) != bytes_read) {
             perror("Erreur d'écriture dans le fichier destination\n") ;
             fclose(src_file) ;
             fclose(dest_file) ;
-            return ;
+            return EXIT_FAILURE ;
         }
     }
 

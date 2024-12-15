@@ -242,14 +242,14 @@ void create_backup(const char *source_dir, const char *backup_dir) {
                     } else if (S_ISREG(st.st_mode)) {
                         if (dry_run_flag) {
                             if (verbose_flag) {
-                                printf("[DRY-RUN] Sauvegarde du fichier : %s\n", filepath);
+                                printf("[DRY-RUN] Sauvegarde du fichier : %s\n", src_path);
                             }
                         } else {
                             if (link(src_path,dst_path)!=0) {
                                 copy_file(src_path,dst_path);
                             }
                             if (verbose_flag) {
-                                printf("[INFO] Fichier sauvegardé : %s\n", filepath);
+                                printf("[INFO] Fichier sauvegardé : %s\n", src_path);
                             }
                         }
                     }
