@@ -162,12 +162,12 @@ void write_log_element(log_element *elt, FILE *logfile){
    */
     if (f) {
         if (dry_run_flag) {
-            fprintf(f, "%s;%s;%s", elt->path, elt->date, elt->md5) ;
+            fprintf(logfile, "%s;%s;%s", elt->path, elt->date, elt->md5) ;
         }
         if (verbose_flag) {
             printf("[INFO] Écriture de l'élément log %s, %s, %s\n", elt->path, elt->date, elt->md5);
         }
-        fclose(f) ;
+        fclose(logfile) ;
     } else {
         printf("Erreur : échec ouverture du fichier\n") ;
         return ;
