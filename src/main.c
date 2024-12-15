@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
             return EXIT_FAILURE;
         } else {
             if (!dest_dir) {
-                dest_dir = '/';
+                dest_dir = "/";
             }
             restore_backup(source_dir, dest_dir);
         }
