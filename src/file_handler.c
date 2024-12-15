@@ -62,7 +62,7 @@ log_t read_backup_log(const char *logfile){
         fclose(f) ;
         return backup ;
     } else {
-        printf("Erreur : ouverture du fichier %s", logfile) ;
+        printf("Erreur : ouverture du fichier %s\n", logfile) ;
         return backup ;
     }
 }
@@ -114,7 +114,7 @@ void update_backup_log(const char *logfile, log_t *logs){
     } else {
         if (f) fclose(f) ;
         if (temp) fclose(temp) ;
-        printf("Erreur : ouverture du fichier %s ou création du fichier temp.txt", logfile) ;
+        printf("Erreur : ouverture du fichier %s ou création du fichier temp.txt\n", logfile) ;
         return EXIT_FAILURE ;
     }
 }
@@ -132,7 +132,7 @@ void write_log_element(log_element *elt, FILE *logfile){
         fprintf(f, "%s;%s;%s", elt->path, elt->date, elt->md5) ;
         fclose(f) ;
     } else {
-        printf("Erreur : ouverture du fichier %s", logfile) ;
+        printf("Erreur : ouverture du fichier %s\n", logfile) ;
         return EXIT_FAILURE ;
     }
 }
@@ -169,13 +169,13 @@ void list_files(const char *path){
                     printf("[Autre] %s\n", entry->d_name) ;
                 }
             } else {
-                perror("Erreur lors de l'obtention des informations sur le fichier") ;
+                perror("Erreur lors de l'obtention des informations sur le fichier %s\n", full_path) ;
             }
         }
     
         closedir(dir) ;
     } else {
-        perror("Erreur d'ouverture du répertoire") ;
+        perror("Erreur d'ouverture du répertoire %s\n", path) ;
         return EXIT_FAILURE ;
     }
 }
@@ -188,13 +188,13 @@ void copy_file(const char *src, const char *dest){
   */
     FILE *src_file = fopen(src, "rb") ; // Ouvre le fichier source en mode lecture binaire
     if (!src_file) {
-        perror("Erreur d'ouverture du fichier source") ;
+        perror("Erreur d'ouverture du fichier source %s\n", src) ;
         return EXIT_FAILURE ;
     }
 
     FILE *dest_file = fopen(dest, "wb") ; // Ouvre le fichier destination en mode écriture binaire
     if (!dest_file) {
-        perror("Erreur d'ouverture du fichier destination") ;
+        perror("Erreur d'ouverture du fichier destination %s\n", dest) ;
         fclose(src_file) ;
         return EXIT_FAILURE ;
     }
@@ -205,7 +205,7 @@ void copy_file(const char *src, const char *dest){
     // Lire et écrire par blocs
     while ((bytes_read = fread(buffer, 1, BUFFER_SIZE, src_file)) > 0) {
         if (fwrite(buffer, 1, bytes_read, dest_file) != bytes_read) {
-            perror("Erreur d'écriture dans le fichier destination") ;
+            perror("Erreur d'écriture dans le fichier destination\n") ;
             fclose(src_file) ;
             fclose(dest_file) ;
             return ;
@@ -213,7 +213,7 @@ void copy_file(const char *src, const char *dest){
     }
 
     if (ferror(src_file)) {
-        perror("Erreur de lecture du fichier source") ;
+        perror("Erreur de lecture du fichier source\n") ;
     }
 
     fclose(src_file) ;
