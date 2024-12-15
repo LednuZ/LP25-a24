@@ -15,11 +15,25 @@
 #define MAX_CHUNKS 10000
 #define MAX_SIZE_PATH 2048
 
+// Récupère les valeurs de verbose_flag et dry_run_flag
+extern int verbose_flag;
+extern int dry_run_flag;
+
 /**
  * @brief Teste l'existence d'un fichier ou répertoire.
  */
 static int file_exists_local(const char *path) {
     struct stat st;
+
+    int exists = (stat(path, &st) == 0);
+    if (verbose_flag) {
+        if (exists) {
+            printf("[INFO] Le fichier existe : %s\n", path);
+        } else {
+            printf("[INFO] Le fichier n'existe pas : %s\n", path);
+        }
+    }
+
     return (stat(path, &st) == 0);
 }
 
@@ -27,8 +41,25 @@ static int file_exists_local(const char *path) {
  * @brief Crée un répertoire si non existant.
  */
 static int create_directory_local(const char *path) {
+    if (verbose_flag) {
+        printf("[INFO] Vérification de l'existance du répertoire : %s\n", path);
+    }   
+
+    if (dry_run_flag) {
+        if (verbose_flag) {
+            printf("[DRY-RUN] Le répertoire a été créé ou existe déjà : %s\n", path);
+        }
+        return 0;
+    }
+
     if (mkdir(path, 0755) == -1 && errno != EEXIST) {
+        if (verbose_flag) {
+            perror("[ERROR] Echec de la création du répertoire");
+        }
         return -1;
+    }
+    if (verbose_flag) {
+        printf("[INFO] Le répertoire a été créé ou existe déjà : %s\n", path);
     }
     return 0;
 }
@@ -43,6 +74,10 @@ static void get_timestamp_local(char *buffer, size_t size) {
     snprintf(buffer, size, "%04d-%02d-%02d-%02d:%02d:%02d.%03ld",
              tm_info->tm_year+1900, tm_info->tm_mon+1, tm_info->tm_mday,
              tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec, tv.tv_usec/1000);
+    
+    if (verbose_flag) {
+        printf("[INFO] Horodatage généré : %s\n", buffer);
+    }
 }
 
 /**
@@ -51,16 +86,27 @@ static void get_timestamp_local(char *buffer, size_t size) {
 static void find_last_backup_local(const char *backup_dir, char *last_backup_dir, size_t size) {
     DIR *dir = opendir(backup_dir);
     if (!dir) {
+        if (verbose_flag) {
+            perror("[ERROR] Echec de l'ouverture du répertoire de sauvegarde");
+        }
         last_backup_dir[0] = '\0';
         return;
     }
+
     struct dirent *entry;
     char latest[2048] = {0};
+
+    if (verbose_flag) {
+        printf("[INFO] Scan du répertoire : %s\n", backup_dir);
+    }
+
     while ((entry = readdir(dir)) != NULL) {
         if (strcmp(entry->d_name,".")==0 || strcmp(entry->d_name,"..")==0) continue;
         if (strcmp(entry->d_name,".backup_log")==0) continue;
+
         char path[2048];
         snprintf(path,sizeof(path),"%s/%s",backup_dir,entry->d_name);
+
         struct stat st;
         if (stat(path,&st)==0 && S_ISDIR(st.st_mode)) {
             if (latest[0]=='\0') {
@@ -73,10 +119,17 @@ static void find_last_backup_local(const char *backup_dir, char *last_backup_dir
         }
     }
     closedir(dir);
+
     if (latest[0] != '\0') {
         snprintf(last_backup_dir,size,"%s/%s",backup_dir,latest);
+        if (verbose_flag) {
+            printf("[INFO] Le dernier répertoire de sauvegarde à été trouvé : %s\n", last_backup_dir);
+        }
     } else {
         last_backup_dir[0]='\0';
+        if (verbose_flag) {
+            printf("[INFO] Aucun répertoire de backup trouvé dans : %s\n", backup_dir);
+        }
     }
 }
 
@@ -90,11 +143,27 @@ void create_backup(const char *source_dir, const char *backup_dir) {
     snprintf(backup_log_path,sizeof(backup_log_path),"%s/.backup_log",backup_dir);
     int first_backup = !file_exists_local(backup_log_path);
 
+    if (verbose_flag) {
+        printf("[INFO] Début de la sauvegarde. Source : %s, Destination : %s\n", source_dir, backup_dir);
+        if (first_backup) {
+            printf("[INFO] Aucune sauvegarde précédente trouvée. Création de la première sauvegarde.\n");
+        }
+    }
+
     // Crée backup_dir si besoin
     if (!file_exists_local(backup_dir)) {
-        if (create_directory_local(backup_dir)!=0) {
-            perror("Erreur création backup_dir");
-            return;
+        if (dry_run_flag) {
+            if (verbose_flag) {
+                printf("[DRY-RUN] Création du répertoire : %s\n", backup_dir);
+            }
+        } else {
+            if (create_directory_local(backup_dir) != 0) {
+                perror("Erreur création backup_dir");
+                return;
+            }
+            if (verbose_flag) {
+                printf("[INFO] Répertoire créé : %s\n", backup_dir);
+            }
         }
     }
 
@@ -103,11 +172,21 @@ void create_backup(const char *source_dir, const char *backup_dir) {
     get_timestamp_local(timestamp,sizeof(timestamp));
     char new_backup_path[2048];
     snprintf(new_backup_path,sizeof(new_backup_path),"%s/%s",backup_dir,timestamp);
-    if (create_directory_local(new_backup_path)!=0) {
-        perror("Erreur new_backup_path");
-        return;
+    
+    if (dry_run_flag) {
+        if (verbose_flag) {
+            printf("[DRY-RUN] Création du répertoire de sauvegarde : %s\n", new_backup_path);
+        }
+    } else {
+        if (create_directory_local(new_backup_path) != 0) {
+            perror("Erreur new_backup_path");
+            return;
+        }
+        if (verbose_flag) {
+            printf("[INFO] Nouveau répertoire de sauvegarde créé : %s\n", new_backup_path);
+        }
     }
-
+    
     // Lit ancien log si pas première sauvegarde
     log_t old_logs={0};
     if (!first_backup) {
@@ -115,6 +194,10 @@ void create_backup(const char *source_dir, const char *backup_dir) {
     }
 
     // Trouve last_backup si pas première
+    if (verbose_flag) {
+        printf("[INFO] Traitement des fichiers de la source : %s\n", source_dir);
+    }
+    
     char last_backup_dir[2048]={0};
     if (!first_backup) {
         find_last_backup_local(backup_dir,last_backup_dir,sizeof(last_backup_dir));
@@ -126,11 +209,13 @@ void create_backup(const char *source_dir, const char *backup_dir) {
         dir_stack_entry stack[1000];
         int top=0;
         strncpy(stack[top++].path,last_backup_dir,sizeof(stack[0].path)-1);
+
         while(top>0) {
             dir_stack_entry current = stack[--top];
             DIR *dir = opendir(current.path);
             if (!dir) continue;
             struct dirent *entry;
+
             while((entry=readdir(dir))!=NULL) {
                 if (strcmp(entry->d_name,".")==0||strcmp(entry->d_name,"..")==0) continue;
                 char src_path[2048],dst_path[2048];
@@ -139,18 +224,41 @@ void create_backup(const char *source_dir, const char *backup_dir) {
                 const char *rel=src_path+lblen;while(*rel=='/')rel++;
                 snprintf(dst_path,sizeof(dst_path),"%s/%s",new_backup_path,rel);
                 struct stat st;
+
                 if (stat(src_path,&st)==0) {
                     if (S_ISDIR(st.st_mode)) {
-                        create_directory_local(dst_path);
+                        if (dry_run_flag) {
+                            if (verbose_flag) {
+                                printf("[DRY-RUN] Création du répertoire : %s\n", dst_path);
+                            }
+                        } else {
+                            create_directory_local(dst_path);
+                            if (verbose_flag) {
+                                printf("[INFO] Répertoire créé : %s\n", dst_path);
+                            }
+                        }
                         strncpy(stack[top++].path,src_path,sizeof(stack[0].path)-1);
+
                     } else if (S_ISREG(st.st_mode)) {
-                        if (link(src_path,dst_path)!=0) {
-                            copy_file(src_path,dst_path);
+                        if (dry_run_flag) {
+                            if (verbose_flag) {
+                                printf("[DRY-RUN] Sauvegarde du fichier : %s\n", filepath);
+                            }
+                        } else {
+                            if (link(src_path,dst_path)!=0) {
+                                copy_file(src_path,dst_path);
+                            }
+                            if (verbose_flag) {
+                                printf("[INFO] Fichier sauvegardé : %s\n", filepath);
+                            }
                         }
                     }
                 }
             }
             closedir(dir);
+        }
+        if (verbose_flag) {
+            printf("[INFO] Fin de la sauvegarde.\n");
         }
     }
 
@@ -178,6 +286,19 @@ void create_backup(const char *source_dir, const char *backup_dir) {
 
                 if(S_ISDIR(st.st_mode)) {
                     // Crée répertoire si inexistant
+                    if (!file_exists_local(dst_path)) {
+                        if (dry_run_flag) {
+                            if (verbose_flag) {
+                                printf("[DRY-RUN] Création du répertoire : %s\n", dst_path);
+                            }
+                        } else {
+                            create_directory_local(dst_path);
+                            if (verbose_flag) {
+                                printf("[INFO] Répertoire créé : %s\n", dst_path);
+                            }
+                        }
+                    }
+                    
                     if(!file_exists_local(dst_path)) create_directory_local(dst_path);
                     // Empile pour exploration
                     strncpy(src_stack[src_top++].path,filepath,sizeof(src_stack[0].path)-1);
