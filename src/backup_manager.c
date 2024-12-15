@@ -15,6 +15,10 @@
 #define MAX_CHUNKS 10000
 #define MAX_SIZE_PATH 2048
 
+// Récupère les valeurs de verbose_flag et dry_run_flag
+extern int verbose_flag;
+extern int dry_run_flag;
+
 /**
  * @brief Teste l'existence d'un fichier ou répertoire.
  */
