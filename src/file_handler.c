@@ -9,7 +9,14 @@
 
 #define BUFFER_SIZE 1024
 
+// Fonction permettant de créer une structure log_element
 log_element *create_element(char *path, char *mtime, char *md5) {
+ /* Crée une structure log_element
+  * @param: path - Chemin vers le fichier
+  *         mtime - Dernière date de modification du fichier
+  *         md5 - Hachage md5 du fichier
+  * @return: un pointeur vers une structure log_element
+  */
     log_element *new_elt = malloc(sizeof(log_element)) ;
     new_elt->path = strdup(path) ;
     new_elt->date = strdup(mtime) ;
@@ -20,24 +27,27 @@ log_element *create_element(char *path, char *mtime, char *md5) {
     return new_elt ;
 }
 
-// Fonction permettant de lire un élément du fichier .backup_log
+// Fonction permettant de lire un fichier .backup_log
 log_t read_backup_log(const char *logfile){
-    /* Implémenter la logique pour la lecture d'une ligne du fichier ".backup_log"
-    * @param: logfile - le chemin vers le fichier .backup_log
-    * @return: une structure log_t
-    */
+ /* Lecture des lignes du fichier ".backup_log"
+  * @param: logfile - le chemin vers le fichier .backup_log
+  * @return: une structure log_t
+  */
     log_t backup = {.head = NULL, .tail = NULL} ;
     char buffer[BUFFER_SIZE] ;
     FILE *f = fopen(logfile, "r") ;
 
     if (f) {
         while (fgets(buffer, BUFFER_SIZE, f)) {
+            // Supprime le saut de ligne
             buffer[strcspn(buffer, "\n")] = '\0';
-
+            
+            // Découper la ligne en chemin, date et MD5
             char *path = strtok(buffer, ";") ;
             char *mtime = strtok(NULL, ";") ;
             char *md5 = strtok(NULL, ";") ;
 
+            // Crée un nouvel élément et l'ajoute à la liste chaînée
             log_element *ligne = create_element(path, mtime, md5) ;
 
             if (backup.head == NULL) {
@@ -57,9 +67,9 @@ log_t read_backup_log(const char *logfile){
     }
 }
 
-// Fonction permettant de mettre à jour une ligne du fichier .backup_log
+// Fonction permettant de mettre à jour le fichier .backup_log
 void update_backup_log(const char *logfile, log_t *logs){
-  /* Implémenter la logique de modification d'une ligne du fichier ".bakcup_log"
+ /* Modification d'une ou plusieurs ligne(s) du fichier ".bakcup_log"
   * @param: logfile - le chemin vers le fichier .backup_log
   *         logs - qui est la liste de toutes les lignes du fichier .backup_log sauvegardée dans une structure log_t
   */
@@ -69,6 +79,8 @@ void update_backup_log(const char *logfile, log_t *logs){
 
     if (f && temp) {
         log_element *elt = logs->head ;
+
+        // Parcourt chaque ligne et effectue la mise à jour si nécessaire
         while(fgets(buffer, BUFFER_SIZE, f)) {
             char *log = malloc(strlen(elt->path) + strlen(elt->date) + strlen(elt->md5) + 3) ;
             strcpy(log, elt->path) ;
@@ -87,6 +99,7 @@ void update_backup_log(const char *logfile, log_t *logs){
             free(log) ;
         }
 
+        // Ajoute les nouvelles entrées restantes
         while (elt != NULL) {
             fprintf(temp, "%s;%s;%s", elt->path, elt->date, elt->md5);
             elt = elt->next ;
@@ -95,6 +108,7 @@ void update_backup_log(const char *logfile, log_t *logs){
         fclose(f) ;
         fclose(temp) ;
 
+        // Remplace le fichier original par le fichier temporaire
         remove(logfile) ;
         rename("temp.txt", logfile) ;
     } else {
@@ -105,8 +119,9 @@ void update_backup_log(const char *logfile, log_t *logs){
     }
 }
 
+// Ecrit un élément log dans le fichier .backup_log
 void write_log_element(log_element *elt, FILE *logfile){
-  /* Implémenter la logique pour écrire un élément log de la liste chaînée log_element dans le fichier .backup_log
+ /* Ecrire un élément log de la liste chaînée log_element dans le fichier .backup_log
    * @param: elt - un élément log à écrire sur une ligne
    *         logfile - le chemin du fichier .backup_log
    */
@@ -122,8 +137,10 @@ void write_log_element(log_element *elt, FILE *logfile){
     }
 }
 
+// Liste les fichiers présents dans un répertoire
 void list_files(const char *path){
-  /* Implémenter la logique pour lister les fichiers présents dans un répertoire
+ /* Implémenter la logique pour lister les fichiers présents dans un répertoire
+  * @param: path - Chemin vers le répertoire
   */
     struct dirent *entry ;
     DIR *dir = opendir(path) ;
@@ -163,7 +180,12 @@ void list_files(const char *path){
     }
 }
 
+// Copie un fichier depuis une source vers une destination
 void copy_file(const char *src, const char *dest){
+ /* Copie un fichier depuis une source vers une destination 
+  * @param: src - Chemin du fichier source
+  *         dest - Chemin du fichier de destination
+  */
     FILE *src_file = fopen(src, "rb") ; // Ouvre le fichier source en mode lecture binaire
     if (!src_file) {
         perror("Erreur d'ouverture du fichier source") ;
