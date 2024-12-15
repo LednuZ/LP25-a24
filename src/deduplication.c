@@ -146,6 +146,7 @@ void undeduplicate_file(FILE *file, Chunk **chunks, int *chunk_count) {
         fread(chunk_md5, 1, MD5_DIGEST_LENGTH, file); // lecture du md5
         memcpy(&(parcours_chunk->md5),chunk_md5, MD5_DIGEST_LENGTH);
         fread(&chunk_size_on_file, 1, sizeof(unsigned int), file);
+        parcours_chunk->lenght = chunk_size_on_file;
         if (chunk_size_on_file != CHUNK_SIZE && chunk_size_on_file == sizeof(unsigned int)) { //savoir si le chunk est un index
             chunk_data = malloc(sizeof(unsigned int));
             fread(chunk_data, 1, sizeof(unsigned int), file);
