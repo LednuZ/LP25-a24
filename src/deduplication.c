@@ -6,6 +6,10 @@
 #include <openssl/md5.h>
 #include <dirent.h>
 
+// Récupère les valeurs de verbose_flag et dry_run_flag
+extern int verbose_flag;
+extern int dry_run_flag;
+
 // Fonction de hachage MD5 pour l'indexation
 // dans la table de hachage
 unsigned int hash_md5(unsigned char *md5) {
