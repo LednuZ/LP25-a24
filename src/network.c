@@ -1,90 +1,93 @@
 #include "network.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
 
 void send_data(const char *server_address, int port, const void *data, size_t size) {
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        perror("Erreur de création du socket");
-        exit(EXIT_FAILURE);
+     int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        perror("Erreur dans la création du socket");
+        return;
+    }
+
+    struct sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+
+    // Convertir l'adresse IP
+    if (inet_pton(AF_INET, server_address, &server_addr.sin_addr) <= 0) {
+        perror("Erreur de la conversion de l'adresse IP");
+        close(sock);
+        return;
+    }
+
+    // Établir la connexion au serveur
+    if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Erreur de connexion");
+        close(sock);
+        return;
+    }
+
+    // Envoyer les données
+    size_t bytes_sent = send(sock, data, size, 0);
+    if (bytes_sent < 0) {
+        perror("Erreur dans l'envoie des données");
+    } else {
+        printf("Envoyé %zd octets au serveur.\n", bytes_sent);
+    }
+
+    close(sock);
+}
+
+size_t receive_data(int port, size_t *size) {
+    int server_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_sock < 0) {
+        perror("Erreur dans la création de socket");
+        return NULL;
     }
 
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(port);
-
-    if (inet_pton(AF_INET, server_address, &server_addr.sin_addr) <= 0) {
-        perror("Adresse serveur invalide");
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
-
-    if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("Échec de la connexion au serveur");
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
-
-    if (send(sockfd, data, size, 0) < 0) {
-        perror("Erreur lors de l'envoi des données");
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
-
-    close(sockfd);
-}
-
-void receive_data(int port, void **data, size_t *size) {
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        perror("Erreur de création du socket");
-        exit(EXIT_FAILURE);
-    }
-
-    struct sockaddr_in server_addr, client_addr;
-    server_addr.sin_family = AF_INET;
+    inet_pton(AF_INET, "0.0.0.0", &(server_addr.sin_addr)) ;
     server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(port);
+    memset(&(server_addr.sin_zero), 0, sizeof(server_addr.sin_zero));
 
-    if (bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("Erreur lors de l'association au port");
-        close(sockfd);
-        exit(EXIT_FAILURE);
+    // Lier le socket à l'adresse et au port
+    if (bind(server_sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Erreur dans la liaison du socket à l'adresse et au port");
+        close(server_sock);
+        return NULL;
     }
 
-    listen(sockfd, 5);
+    // Écouter les connexions entrantes
+    if (listen(server_sock, 1) < 0) {
+        perror("Erreur lors de l'écoute du serveur");
+        close(server_sock);
+        return NULL;
+    }
 
-    socklen_t client_len = sizeof(client_addr);
-    int client_sock = accept(sockfd, (struct sockaddr *)&client_addr, &client_len);
+    printf("En attente d'une connexion sur le port %d...\n", port);
+
+    // Accepter une connexion
+    int client_sock = accept(server_sock, NULL, NULL);
     if (client_sock < 0) {
-        perror("Erreur lors de l'acceptation de la connexion client");
-        close(sockfd);
-        exit(EXIT_FAILURE);
+        perror("Erreur lors de l'acceptation de la connexion");
+        close(server_sock);
+        return NULL;
     }
 
-    size_t buffer_size = 1024;
-    *data = malloc(buffer_size);
-    if (!*data) {
-        perror("Erreur d'allocation mémoire");
+    // Recevoir des données
+    char buffer[size];
+    size_t bytes_received = recv(client_sock, buffer, sizeof(buffer), 0);
+    if (bytes_received < 0) {
+        perror("Erreur dans la réception des données");
         close(client_sock);
-        close(sockfd);
-        exit(EXIT_FAILURE);
+        close(server_sock);
+        return NULL;
     }
 
-    ssize_t received_size = recv(client_sock, *data, buffer_size, 0);
-    if (received_size < 0) {
-        perror("Erreur lors de la réception des données");
-        free(*data);
-        close(client_sock);
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
-
-    *size = (size_t)received_size;
+    // Si des données ont bien été récupérées, elles sont retournées pour être sauvegardées/écrites
     close(client_sock);
-    close(sockfd);
+    close(server_sock);
+
+    return bytes_received;
 }
