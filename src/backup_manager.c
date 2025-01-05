@@ -22,8 +22,7 @@ extern int dry_run_flag;
 /**
  * @brief Teste l'existence d'un fichier ou répertoire.
  */
-static int file_exists_local(const char *path)
-{
+static int file_exists_local(const char *path) {
     struct stat st;
     int exists = (stat(path, &st) == 0);
 
@@ -41,8 +40,7 @@ static int file_exists_local(const char *path)
 /**
  * @brief Crée un répertoire s'il n'existe pas déjà.
  */
-static int create_directory_local(const char *path)
-{
+static int create_directory_local(const char *path) {
     if (verbose_flag) {
         printf("[INFO] Vérification de l'existence du répertoire : %s\n", path);
     }
@@ -71,8 +69,7 @@ static int create_directory_local(const char *path)
 /**
  * @brief Génère un horodatage sous forme YYYY-MM-DD-hh:mm:ss.sss.
  */
-static void get_timestamp_local(char *buffer, size_t size)
-{
+static void get_timestamp_local(char *buffer, size_t size) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     struct tm *tm_info = localtime(&tv.tv_sec);
@@ -90,8 +87,7 @@ static void get_timestamp_local(char *buffer, size_t size)
 /**
  * @brief Trouve le dernier répertoire de sauvegarde (le plus récent).
  */
-static void find_last_backup_local(const char *backup_dir, char *last_backup_dir, size_t size)
-{
+static void find_last_backup_local(const char *backup_dir, char *last_backup_dir, size_t size) {
     DIR *dir = opendir(backup_dir);
     if (!dir) {
         if (verbose_flag) {
@@ -149,8 +145,7 @@ static void find_last_backup_local(const char *backup_dir, char *last_backup_dir
  * @brief Écrit dans un fichier de backup dédupliqué le tableau de chunks.
  * Si dry_run_flag est activé, n'écrit pas réellement, se contente d'afficher ce qui serait fait.
  */
-void write_backup_file(const char *output_filename, Chunk *chunks, int chunk_count)
-{
+void write_backup_file(const char *output_filename, Chunk *chunks, int chunk_count) {
     if (dry_run_flag) {
         if (verbose_flag) {
             printf("[DRY-RUN] Écriture du fichier dédupliqué : %s avec %d chunks (non réalisée)\n", output_filename, chunk_count);
@@ -182,8 +177,7 @@ void write_backup_file(const char *output_filename, Chunk *chunks, int chunk_cou
  * @brief Met à jour le fichier .backup_log.
  * Si dry_run_flag est activé, n'écrit pas réellement, se contente d'afficher ce qui serait fait.
  */
-static void update_backup_log_if_needed(const char *backup_log_path, log_t *new_logs)
-{
+static void update_backup_log_if_needed(const char *backup_log_path, log_t *new_logs) {
     if (dry_run_flag) {
         if (verbose_flag) {
             printf("[DRY-RUN] Mise à jour de .backup_log (%s) non réalisée\n", backup_log_path);
@@ -199,8 +193,7 @@ static void update_backup_log_if_needed(const char *backup_log_path, log_t *new_
 /**
  * @brief Copie un fichier si dry_run_flag est désactivé, sinon juste un message.
  */
-static void copy_file_if_needed(const char *src, const char *dst)
-{
+static void copy_file_if_needed(const char *src, const char *dst) {
     if (dry_run_flag) {
         if (verbose_flag) {
             printf("[DRY-RUN] Copie du fichier %s vers %s non réalisée\n", src, dst);
@@ -217,8 +210,7 @@ static void copy_file_if_needed(const char *src, const char *dst)
  * @brief Écrit un fichier restauré à partir d'un tableau de chunks.
  * Si dry_run_flag est activé, n'écrit pas réellement le fichier, juste un message.
  */
-void write_restored_file(const char *output_filename, Chunk *chunks, int chunk_count)
-{
+void write_restored_file(const char *output_filename, Chunk *chunks, int chunk_count) {
     if (dry_run_flag) {
         if (verbose_flag) {
             printf("[DRY-RUN] Écriture du fichier restauré : %s (%d chunks) non réalisée\n", output_filename, chunk_count);
@@ -244,8 +236,7 @@ void write_restored_file(const char *output_filename, Chunk *chunks, int chunk_c
 /**
  * @brief Crée une nouvelle sauvegarde incrémentale.
  */
-void create_backup(const char *source_dir, const char *backup_dir)
-{
+void create_backup(const char *source_dir, const char *backup_dir) {
     char backup_log_path[1024];
     snprintf(backup_log_path, sizeof(backup_log_path), "%s/.backup_log", backup_dir);
     int first_backup = !file_exists_local(backup_log_path);
@@ -656,8 +647,7 @@ void create_backup(const char *source_dir, const char *backup_dir)
 /**
  * @brief Déduplique un fichier.
  */
-void backup_file(const char *filename)
-{
+void backup_file(const char *filename) {
     FILE *file = fopen(filename, "rb");
     if (!file) {
         perror("Err backup_file fopen");
@@ -690,8 +680,7 @@ void backup_file(const char *filename)
 /**
  * @brief Restaure une sauvegarde.
  */
-void restore_backup(const char *backup_id, const char *restore_dir)
-{
+void restore_backup(const char *backup_id, const char *restore_dir) {
     char backup_dir[MAX_SIZE_PATH];
     strcpy(backup_dir, backup_id);
     char *last_slash = strrchr(backup_dir, '/');
@@ -764,8 +753,7 @@ void restore_backup(const char *backup_id, const char *restore_dir)
 /**
  * @brief Liste les sauvegardes.
  */
-void list_backups(const char *backup_dir)
-{
+void list_backups(const char *backup_dir) {
     DIR *dir = opendir(backup_dir);
     if (dir == NULL) {
         perror("Erreur pendant l'ouverture du dossier");
