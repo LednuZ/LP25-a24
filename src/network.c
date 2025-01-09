@@ -76,7 +76,7 @@ size_t receive_data(int port, size_t *size) {
     }
 
     // Recevoir des données
-    char buffer[size];
+    char buffer[*size];
     size_t bytes_received = recv(client_sock, buffer, sizeof(buffer), 0);
     if (bytes_received < 0) {
         perror("Erreur dans la réception des données");
