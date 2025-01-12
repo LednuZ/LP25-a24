@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if ((backup_flag + restore_flag + list_flag) != 1) {
+    if (!(backup_flag) ^ !(restore_flag) ^ !(list_flag)) {
         fprintf(stderr, "Erreur: Vous devez utiliser une seule option parmi : --backup, --restore, --list-backups.\n\n");
         return EXIT_FAILURE;
     }
@@ -93,30 +93,27 @@ int main(int argc, char *argv[]) {
         if (!source_dir || !dest_dir) {
             fprintf(stderr, "Erreur: Vous devez spécifier les dossiers source et destination.\n");
             return EXIT_FAILURE;
-        } else {
-            create_backup(source_dir, dest_dir);
         }
+        create_backup(source_dir, dest_dir);
     }
 
     if (restore_flag) {
         if (!source_dir) {
             fprintf(stderr, "Erreur: Vous devez spécifier le dossier de sauvergarde avec l'option --source.\n");
             return EXIT_FAILURE;
-        } else {
-            if (!dest_dir) {
-                dest_dir = "/";
-            }
-            restore_backup(source_dir, dest_dir);
         }
+        if (!dest_dir) {
+            dest_dir = "/";
+        }
+        restore_backup(source_dir, dest_dir);
     }
 
     if (list_flag) {
         if (!source_dir) {
             fprintf(stderr, "Erreur: Vous devez spécifier le dossier de sauvergarde avec l'option --source.\n");
             return EXIT_FAILURE;
-        } else {
-            list_backups(source_dir);
         }
+        list_backups(source_dir);
     }
 
     return EXIT_SUCCESS;
