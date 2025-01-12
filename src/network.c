@@ -37,7 +37,7 @@ void send_data(const char *server_address, int port, const void *data, size_t si
     close(sock);
 }
 
-size_t *receive_data(int port, size_t size) {
+size_t receive_data(int port, size_t size) {
     int server_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (server_sock < 0) {
         perror("Erreur dans la création de socket");
@@ -89,5 +89,5 @@ size_t *receive_data(int port, size_t size) {
     close(client_sock);
     close(server_sock);
 
-    return &bytes_received;
+    return bytes_received;
 }
