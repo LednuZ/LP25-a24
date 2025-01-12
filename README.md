@@ -110,6 +110,40 @@ L'option `--list-backups` permet d'afficher toutes les sauvegardes existantes, q
 4. Si l'option `--verbose` est activée, des informations supplémentaires peuvent être affichées, comme le chemin complet des fichiers de sauvegarde ou des informations sur la connexion réseau.
 
 
+## Communication réseaux 
+Pour les fonctions du réseau, il n'y a principalement que deux fonctions :
+- une fonction pour envoyer les données à un autre instance de borg-backup
+- une fonction pour recevoir les données d'une instance de borg-backup
+
+Afin de faire les transfert en réseau, vous démarrez deux instances du programme. Les deux instances sont démarrées de la façon suivante : 
+- l'instance en mode serveur :
+	- Exemple : `./lp25_borg_backup --backup --s-sever ip_source --d-server 127.0.0.1 --d-port num_port --dest nom_dossier`.
+ 	- Lorsque l'option `--d-server` est `127.0.0.1`, alors il passe en écoute et utilise la fonction `receive_data` pour récupérer les données qui seront envoyées puis les sauvegarde dans le dossier précisé en option `--dest`
+- l'instance en mode client :
+	- Exemple : `./lp25_borg_backup --backup --s-sever 127.0.0.1 --d-server ip_serveur --d-port num_port --source nom_dossier`.
+ 	- Lorsque l'option `--s-server` est `127.0.0.1` alors, il passe en mode client et utilise la fonction `send_data` pour envoyer à `ip_serveur`, les données à sauvegarder depuis le dossier précisé en option `--source`
+ 
+Les deux instances suivent les étapes suivantes :
+- Pour le Backup :
+	1. Le client envoie le texte "`BACKUP`" puis se met en écoute.
+	2. le serveur envoie au client le fichier "`.backup_log`" de la racine du répertoire de destination puis se met en écoute.
+	3. Lorsque le client reçoit le fichier `.backup_log`, il le stocke en mémoire et fais les comparaison (_date de modif, md5_)
+	4. Après comparaison, toutes les données sont dédupliquées avant d'être envoyées au serveur pour sauvegarde
+	5. Une fois toutes les données envoyées, il envoie le mot "`EXIT`" pour mettre fin à l'échange.
+- Pour la Restoration :
+	1. Le client envoie le texte "`RESTORE BACKUP_ID`" (où `BACKUP_ID` est le nom de la sauvegarde à restorer) puis se met en écoute.
+	2. Le serveur envoie utilise le fichier "`.backup_log`" de la sauvegarde correspondante et utilise la fonction undeduplicate pour reconstruire le fichiers originaux.
+	3. Ensuite le serveur envoie au client les fichiers
+	4. Le client restore dans le dossier précisé les fichiers reçus
+	5. Une fois tous les fichiers envoyés, le serveur envoie le mot "`EXIT`"
+- Pour lister les backups :
+	1. Le client envoie le texte "`LIST-BACKUP`" puis se met en écoute
+	2. Le serveur construit la liste des backups dans son répertoire de sauvegarde et l'envoie au client
+	3. Le client reçoit les informations et les affiche au fur et à mesure sur le terminale
+	4. Une fois que le serveur à fini d'envoyer les informations, il envoie le mot "`EXIT`"
+
+
+
 ## Points notables
 
 - copie avec `sendfile`
