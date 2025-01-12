@@ -37,11 +37,11 @@ void send_data(const char *server_address, int port, const void *data, size_t si
     close(sock);
 }
 
-size_t receive_data(int port, size_t size) {
+ssize_t receive_data(int port, size_t size) {
     int server_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (server_sock < 0) {
         perror("Erreur dans la création de socket");
-        return NULL;
+        return -1;
     }
 
     struct sockaddr_in server_addr;
@@ -55,14 +55,14 @@ size_t receive_data(int port, size_t size) {
     if (bind(server_sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
         perror("Erreur dans la liaison du socket à l'adresse et au port");
         close(server_sock);
-        return NULL;
+        return -1;
     }
 
     // Écouter les connexions entrantes
     if (listen(server_sock, 1) < 0) {
         perror("Erreur lors de l'écoute du serveur");
         close(server_sock);
-        return NULL;
+        return -1;
     }
 
     printf("En attente d'une connexion sur le port %d...\n", port);
@@ -72,7 +72,7 @@ size_t receive_data(int port, size_t size) {
     if (client_sock < 0) {
         perror("Erreur lors de l'acceptation de la connexion");
         close(server_sock);
-        return NULL;
+        return -1;
     }
 
     // Recevoir des données
@@ -82,7 +82,7 @@ size_t receive_data(int port, size_t size) {
         perror("Erreur dans la réception des données");
         close(client_sock);
         close(server_sock);
-        return NULL;
+        return -1;
     }
 
     // Si des données ont bien été récupérées, elles sont retournées pour être sauvegardées/écrites
