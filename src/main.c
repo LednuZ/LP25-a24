@@ -15,9 +15,9 @@ static int list_flag = 0;
 
 int main(int argc, char *argv[]) {
     static struct option long_options[] = {
-        {"backup", no_argument, &backup_flag, 'b'},
-        {"restore", no_argument, &restore_flag, 'r'},
-        {"list-backups", no_argument, &list_flag, 'l'},
+        {"backup", no_argument, NULL, 'b'},
+        {"restore", no_argument, NULL, 'r'},
+        {"list-backups", no_argument, NULL, 'l'},
         {"dry-run", no_argument, &dry_run_flag, 'y'},
         {"d-server", required_argument, NULL, 'j'},
         {"d-port", required_argument, NULL, 'k'},
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (!(backup_flag) ^ !(restore_flag) ^ !(list_flag)) {
+    if ((backup_flag) + (restore_flag) + (list_flag) != 1) {
         fprintf(stderr, "Erreur: Vous devez utiliser une seule option parmi : --backup, --restore, --list-backups.\n\n");
         return EXIT_FAILURE;
     }
