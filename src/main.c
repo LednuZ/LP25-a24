@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
     }
 
     if ((backup_flag + restore_flag + list_flag) != 1) {
-        fprintf(stderr, "Erreur: Vous devez utiliser une seule option parmi : --backup, --restore, --list_backups.\n");
+        fprintf(stderr, "Erreur: Vous devez utiliser une seule option parmi : --backup, --restore, --list_backups.\n\n");
         return EXIT_FAILURE;
     }
 
